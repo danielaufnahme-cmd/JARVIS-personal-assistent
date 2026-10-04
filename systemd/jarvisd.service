@@ -1,0 +1,21 @@
+[Unit]
+Description=JARVIS daemon (session, agent, IPC)
+# Section 10: start with the graphical session, not at boot. With lingering on, default.target is reached before
+# login: the USB mic isn't there yet (no echo canceller), the keyring is locked (no email), there is no network yet,
+# and the Hyprland/Wayland environment (desktop tools) comes from the session (uwsm imports it). llama-swap needs
+# none of that and stays on default.target (it only starts llama-server when a request comes in).
+After=graphical-session.target llama-swap.service
+Wants=llama-swap.service
+PartOf=graphical-session.target
+
+[Service]
+Type=simple
+ExecStart=%h/.local/bin/uv run --project %h/jarvis python -m jarvis
+WorkingDirectory=%h/jarvis
+Environment=XDG_RUNTIME_DIR=%t
+Environment=PYTHONUNBUFFERED=1
+Restart=on-failure
+RestartSec=2
+
+[Install]
+WantedBy=graphical-session.target

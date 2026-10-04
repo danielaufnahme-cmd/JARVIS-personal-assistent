@@ -1,0 +1,11 @@
+<!doctype html><html><head><meta charset="utf-8"><title>jarvis-sandbox-23 · pricing</title>
+<link rel="stylesheet" href="common.css"><style>.plans{display:flex;gap:22px}.plan{flex:1;border:1px solid #dde1e8;border-radius:8px;padding:18px}
+.plan h2{margin:0 0 6px;font-size:19px}.price{font-size:26px;font-weight:700;margin:8px 0 14px}</style></head><body>
+<header><span class="brand">Cloudnine</span><a href="nav.html">Home</a><a href="#">Products</a><a href="pricing.html">Pricing</a><a href="#">Docs</a><a href="#">About</a></header>
+<main><h1>Pricing</h1><div class="plans">
+<div class="plan"><h2>Starter</h2><div class="price">0 €</div><p>1 site, community help</p><button onclick="pick('Starter')">Choose Starter</button></div>
+<div class="plan"><h2>Pro</h2><div class="price">12 €</div><p>10 sites, email help</p><button onclick="pick('Pro')">Choose Pro</button></div>
+<div class="plan"><h2>Team</h2><div class="price">39 €</div><p>Unlimited sites, phone help</p><button onclick="pick('Team')">Choose Team</button></div>
+</div><div id="st" class="status"></div></main>
+<script>function pick(p){const st=document.getElementById('st');st.textContent='Selected plan: '+p;st.classList.add('show');
+document.title='jarvis-sandbox-23 · pricing · chosen: '+p;}</script></body></html>

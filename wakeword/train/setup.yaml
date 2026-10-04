@@ -1,0 +1,4 @@
+model_name: jarvis
+target_phrases: ["jarvis"]
+data_dir: /home/daniel/jarvis/wakeword/data/lk
+output_dir: /home/daniel/jarvis/wakeword/data/lk/output

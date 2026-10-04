@@ -1,0 +1,15 @@
+<!doctype html><html><head><meta charset="utf-8"><title>jarvis-sandbox-23 · invoices</title>
+<link rel="stylesheet" href="common.css"></head><body>
+<header><span class="brand">Ledgerly</span><a href="#">Invoices</a><a href="#">Clients</a><a href="#">Reports</a></header>
+<main><h1>Invoices</h1><table id="t"><tr><th>#</th><th>Client</th><th>Amount</th><th>Status</th><th></th></tr></table></main>
+<script>
+const rows=[["2024","Initech","1 240 €"],["2025","Umbrella Ltd","980 €"],["2026","Stark Industries","4 310 €"],
+["2027","Wayne Enterprises","2 050 €"],["2028","Globex Corporation","3 775 €"],["2029","Hooli","640 €"],
+["2030","Soylent Co","1 115 €"],["2031","Cyberdyne","2 900 €"],["2032","Tyrell Corp","720 €"],["2033","Vandelay Imports","1 480 €"]];
+const archived=new Set(); const t=document.getElementById('t');
+function upd(){ document.title='jarvis-sandbox-23 · invoices'+(archived.size?' · archived: '+[...archived].join(', '):''); }
+rows.forEach(([n,c,a])=>{ const tr=document.createElement('tr');
+ tr.innerHTML=`<td>${n}</td><td>${c}</td><td>${a}</td><td class="s">Open</td><td><button>View</button> <button class="arc">Archive</button></td>`;
+ tr.querySelector('.arc').onclick=()=>{ archived.add(c); tr.querySelector('.s').textContent='Archived'; tr.style.opacity=.45; upd(); };
+ t.appendChild(tr); });
+</script></body></html>

@@ -1,0 +1,15 @@
+<!doctype html><html><head><meta charset="utf-8"><title>jarvis-sandbox-23 · order options</title>
+<link rel="stylesheet" href="common.css"><style>.seg button{margin-right:6px}.seg button.sel{background:#2f6fed;color:#fff;border-color:#2f6fed}
+.chk{display:flex;gap:10px;align-items:center;margin-top:18px;font-weight:600}.box{width:22px;height:22px;border:2px solid #8a93a6;border-radius:4px;display:inline-flex;align-items:center;justify-content:center;cursor:pointer}
+.box.on{background:#2f6fed;border-color:#2f6fed;color:#fff}</style></head><body>
+<header><span class="brand">Teashop</span><a href="#">Shop</a><a href="#">Orders</a></header>
+<main><h1>Order #5521 · Sencha green tea</h1>
+<label>Size</label><div class="seg"><button data-v="Small">Small</button><button data-v="Medium">Medium</button><button data-v="Large" class="sel">Large</button></div>
+<div class="chk"><span id="exp" class="box"></span><span>Express delivery</span></div>
+<div class="chk"><span id="gift" class="box"></span><span>Gift wrap</span></div>
+<p style="margin-top:24px"><button class="primary" onclick="save()">Save options</button></p><div id="st" class="status"></div></main>
+<script>let size='Large'; document.querySelectorAll('.seg button').forEach(b=>b.onclick=()=>{document.querySelectorAll('.seg button').forEach(x=>x.classList.remove('sel'));b.classList.add('sel');size=b.dataset.v;});
+['exp','gift'].forEach(id=>{const e=document.getElementById(id);e.onclick=()=>{e.classList.toggle('on');e.textContent=e.classList.contains('on')?'✓':'';};});
+function save(){const ex=document.getElementById('exp').classList.contains('on'),g=document.getElementById('gift').classList.contains('on');
+const st=document.getElementById('st');st.textContent='Saved: '+size+(ex?', express delivery':'')+(g?', gift wrap':'');st.classList.add('show');
+document.title='jarvis-sandbox-23 · order options · saved: '+size+(ex?' express':'')+(g?' gift':'');}</script></body></html>

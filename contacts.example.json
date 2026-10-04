@@ -1,0 +1,20 @@
+[
+  {
+    "name": "Jane Example",
+    "aliases": ["mom", "mum", "mama", "máma", "maminka", "mother"],
+    "emails": ["mom@example.com"],
+    "phones": ["+420 600 000 001"]
+  },
+  {
+    "name": "John Example",
+    "aliases": ["dad", "táta", "father"],
+    "emails": ["dad@example.com"],
+    "phones": ["+420 600 000 002"]
+  },
+  {
+    "name": "Petr Testovací",
+    "aliases": ["petr"],
+    "emails": ["petr@example.org"],
+    "phones": ["+420 600 000 003"]
+  }
+]

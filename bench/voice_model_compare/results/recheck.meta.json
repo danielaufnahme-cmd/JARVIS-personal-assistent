@@ -1,0 +1,1337 @@
+{
+ "started": "2026-09-27 16:20:24",
+ "tools": [
+  "append_to_file",
+  "cancel_reminder",
+  "close_app",
+  "close_hud",
+  "coding_status",
+  "computer_task",
+  "create_file",
+  "deep_think",
+  "draft_email",
+  "find_path",
+  "firm_metric",
+  "firm_summary",
+  "focus_app",
+  "get_calendar",
+  "get_email",
+  "get_news",
+  "get_time",
+  "get_weather",
+  "go_to_sleep",
+  "list_folder",
+  "list_reminders",
+  "list_windows",
+  "lock_screen",
+  "mark_read",
+  "media",
+  "mouse",
+  "open_app",
+  "open_hud",
+  "open_path",
+  "open_url",
+  "open_with",
+  "press_keys",
+  "read_emails",
+  "read_file",
+  "read_webpage",
+  "revise_draft",
+  "run_command",
+  "screenshot",
+  "search_contacts",
+  "set_reminder",
+  "set_timer",
+  "start_coding_project",
+  "start_training",
+  "stop_coding_project",
+  "stop_training",
+  "switch_workspace",
+  "system_status",
+  "system_update_check",
+  "training_status",
+  "type_text",
+  "web_search"
+ ],
+ "n_tools": 51,
+ "cases": 68,
+ "runs": 2,
+ "prompt_mtime": "Sun Sep 27 16:08:42 2026",
+ "registry_mtime": "Sun Sep 27 15:54:04 2026",
+ "fast_temperature": 0.2,
+ "voice_max_tokens": 300,
+ "fallback": true,
+ "servers": {
+  "qwen35-2b-jarvis": {
+   "load_s": 1.61,
+   "first_prime_s": 1.5,
+   "cached_prime_s": 0.04,
+   "vram_mb": 1594,
+   "vram_mb_end": 1600
+  },
+  "qwen35-4b": {
+   "load_s": 2.11,
+   "first_prime_s": 3.39,
+   "cached_prime_s": 0.05,
+   "vram_mb": 3522,
+   "vram_mb_end": 3526
+  }
+ },
+ "gpu": [
+  {
+   "t": "16:23:36",
+   "util": 100,
+   "used_mb": 7627,
+   "swap": [
+    "qwen35-2b-jarvis"
+   ],
+   "forced": null
+  },
+  {
+   "t": "16:23:38",
+   "util": 69,
+   "used_mb": 7627,
+   "swap": [
+    "qwen35-2b-jarvis"
+   ],
+   "forced": null
+  },
+  {
+   "t": "16:23:41",
+   "util": 66,
+   "used_mb": 7627,
+   "swap": [
+    "qwen35-2b-jarvis"
+   ],
+   "forced": null
+  },
+  {
+   "t": "16:23:44",
+   "util": 86,
+   "used_mb": 7627,
+   "swap": [
+    "qwen35-2b-jarvis"
+   ],
+   "forced": null
+  },
+  {
+   "t": "16:23:46",
+   "util": 87,
+   "used_mb": 7611,
+   "swap": [
+    "qwen35-2b-jarvis"
+   ],
+   "forced": null
+  },
+  {
+   "t": "16:23:49",
+   "util": 97,
+   "used_mb": 7611,
+   "swap": [
+    "qwen35-2b-jarvis"
+   ],
+   "forced": null
+  },
+  {
+   "t": "16:23:51",
+   "util": 68,
+   "used_mb": 7611,
+   "swap": [
+    "qwen35-2b-jarvis"
+   ],
+   "forced": null
+  },
+  {
+   "t": "16:23:54",
+   "util": 97,
+   "used_mb": 7613,
+   "swap": [
+    "qwen35-2b-jarvis"
+   ],
+   "forced": null
+  },
+  {
+   "t": "16:23:56",
+   "util": 70,
+   "used_mb": 7613,
+   "swap": [
+    "qwen35-2b-jarvis"
+   ],
+   "forced": null
+  },
+  {
+   "t": "16:23:59",
+   "util": 94,
+   "used_mb": 7613,
+   "swap": [
+    "qwen35-2b-jarvis"
+   ],
+   "forced": null
+  },
+  {
+   "t": "16:24:01",
+   "util": 70,
+   "used_mb": 7613,
+   "swap": [
+    "qwen35-2b-jarvis"
+   ],
+   "forced": null
+  },
+  {
+   "t": "16:24:04",
+   "util": 98,
+   "used_mb": 7613,
+   "swap": [
+    "qwen35-2b-jarvis"
+   ],
+   "forced": null
+  },
+  {
+   "t": "16:24:06",
+   "util": 94,
+   "used_mb": 7613,
+   "swap": [
+    "qwen35-2b-jarvis"
+   ],
+   "forced": null
+  },
+  {
+   "t": "16:24:09",
+   "util": 95,
+   "used_mb": 7613,
+   "swap": [
+    "qwen35-2b-jarvis"
+   ],
+   "forced": null
+  },
+  {
+   "t": "16:24:11",
+   "util": 71,
+   "used_mb": 7613,
+   "swap": [
+    "qwen35-2b-jarvis"
+   ],
+   "forced": null
+  },
+  {
+   "t": "16:24:14",
+   "util": 94,
+   "used_mb": 7613,
+   "swap": [
+    "qwen35-2b-jarvis"
+   ],
+   "forced": null
+  },
+  {
+   "t": "16:24:16",
+   "util": 71,
+   "used_mb": 7613,
+   "swap": [
+    "qwen35-2b-jarvis"
+   ],
+   "forced": null
+  },
+  {
+   "t": "16:24:19",
+   "util": 71,
+   "used_mb": 7613,
+   "swap": [
+    "qwen35-2b-jarvis"
+   ],
+   "forced": null
+  },
+  {
+   "t": "16:24:22",
+   "util": 73,
+   "used_mb": 7613,
+   "swap": [
+    "qwen35-2b-jarvis"
+   ],
+   "forced": null
+  },
+  {
+   "t": "16:24:24",
+   "util": 98,
+   "used_mb": 7613,
+   "swap": [
+    "qwen35-2b-jarvis"
+   ],
+   "forced": null
+  },
+  {
+   "t": "16:24:27",
+   "util": 68,
+   "used_mb": 7613,
+   "swap": [
+    "qwen35-2b-jarvis"
+   ],
+   "forced": null
+  },
+  {
+   "t": "16:24:29",
+   "util": 95,
+   "used_mb": 7613,
+   "swap": [
+    "qwen35-2b-jarvis"
+   ],
+   "forced": null
+  },
+  {
+   "t": "16:24:32",
+   "util": 91,
+   "used_mb": 7613,
+   "swap": [
+    "qwen35-2b-jarvis"
+   ],
+   "forced": null
+  },
+  {
+   "t": "16:24:36",
+   "util": 98,
+   "used_mb": 7613,
+   "swap": [
+    "qwen35-2b-jarvis"
+   ],
+   "forced": null
+  },
+  {
+   "t": "16:24:39",
+   "util": 71,
+   "used_mb": 7613,
+   "swap": [
+    "qwen35-2b-jarvis"
+   ],
+   "forced": null
+  },
+  {
+   "t": "16:24:42",
+   "util": 94,
+   "used_mb": 7619,
+   "swap": [
+    "qwen35-2b-jarvis"
+   ],
+   "forced": null
+  },
+  {
+   "t": "16:24:44",
+   "util": 77,
+   "used_mb": 7619,
+   "swap": [
+    "qwen35-2b-jarvis"
+   ],
+   "forced": null
+  },
+  {
+   "t": "16:24:47",
+   "util": 72,
+   "used_mb": 7619,
+   "swap": [
+    "qwen35-2b-jarvis"
+   ],
+   "forced": null
+  },
+  {
+   "t": "16:24:50",
+   "util": 98,
+   "used_mb": 7619,
+   "swap": [
+    "qwen35-2b-jarvis"
+   ],
+   "forced": null
+  },
+  {
+   "t": "16:24:52",
+   "util": 58,
+   "used_mb": 7619,
+   "swap": [
+    "qwen35-2b-jarvis"
+   ],
+   "forced": null
+  },
+  {
+   "t": "16:24:55",
+   "util": 98,
+   "used_mb": 7619,
+   "swap": [
+    "qwen35-2b-jarvis"
+   ],
+   "forced": null
+  },
+  {
+   "t": "16:24:57",
+   "util": 94,
+   "used_mb": 7619,
+   "swap": [
+    "qwen35-2b-jarvis"
+   ],
+   "forced": null
+  },
+  {
+   "t": "16:25:00",
+   "util": 97,
+   "used_mb": 7619,
+   "swap": [
+    "qwen35-2b-jarvis"
+   ],
+   "forced": null
+  },
+  {
+   "t": "16:25:02",
+   "util": 98,
+   "used_mb": 7619,
+   "swap": [
+    "qwen35-2b-jarvis"
+   ],
+   "forced": null
+  },
+  {
+   "t": "16:25:05",
+   "util": 72,
+   "used_mb": 7619,
+   "swap": [
+    "qwen35-2b-jarvis"
+   ],
+   "forced": null
+  },
+  {
+   "t": "16:25:09",
+   "util": 98,
+   "used_mb": 7619,
+   "swap": [
+    "qwen35-2b-jarvis"
+   ],
+   "forced": null
+  },
+  {
+   "t": "16:25:11",
+   "util": 55,
+   "used_mb": 7619,
+   "swap": [
+    "qwen35-2b-jarvis"
+   ],
+   "forced": null
+  },
+  {
+   "t": "16:25:14",
+   "util": 98,
+   "used_mb": 7619,
+   "swap": [
+    "qwen35-2b-jarvis"
+   ],
+   "forced": null
+  },
+  {
+   "t": "16:25:18",
+   "util": 96,
+   "used_mb": 7619,
+   "swap": [
+    "qwen35-2b-jarvis"
+   ],
+   "forced": null
+  },
+  {
+   "t": "16:25:21",
+   "util": 65,
+   "used_mb": 7619,
+   "swap": [
+    "qwen35-2b-jarvis"
+   ],
+   "forced": null
+  },
+  {
+   "t": "16:25:25",
+   "util": 96,
+   "used_mb": 7619,
+   "swap": [
+    "qwen35-2b-jarvis"
+   ],
+   "forced": null
+  },
+  {
+   "t": "16:25:28",
+   "util": 98,
+   "used_mb": 7621,
+   "swap": [
+    "qwen35-2b-jarvis"
+   ],
+   "forced": null
+  },
+  {
+   "t": "16:25:31",
+   "util": 98,
+   "used_mb": 7621,
+   "swap": [
+    "qwen35-2b-jarvis"
+   ],
+   "forced": null
+  },
+  {
+   "t": "16:25:34",
+   "util": 72,
+   "used_mb": 7621,
+   "swap": [
+    "qwen35-2b-jarvis"
+   ],
+   "forced": null
+  },
+  {
+   "t": "16:25:37",
+   "util": 96,
+   "used_mb": 7621,
+   "swap": [
+    "qwen35-2b-jarvis"
+   ],
+   "forced": null
+  },
+  {
+   "t": "16:25:40",
+   "util": 98,
+   "used_mb": 7621,
+   "swap": [
+    "qwen35-2b-jarvis"
+   ],
+   "forced": null
+  },
+  {
+   "t": "16:25:43",
+   "util": 84,
+   "used_mb": 7621,
+   "swap": [
+    "qwen35-2b-jarvis"
+   ],
+   "forced": null
+  },
+  {
+   "t": "16:25:47",
+   "util": 98,
+   "used_mb": 7621,
+   "swap": [
+    "qwen35-2b-jarvis"
+   ],
+   "forced": null
+  },
+  {
+   "t": "16:25:51",
+   "util": 81,
+   "used_mb": 7621,
+   "swap": [
+    "qwen35-2b-jarvis"
+   ],
+   "forced": null
+  },
+  {
+   "t": "16:25:54",
+   "util": 89,
+   "used_mb": 7621,
+   "swap": [
+    "qwen35-2b-jarvis"
+   ],
+   "forced": null
+  },
+  {
+   "t": "16:25:57",
+   "util": 83,
+   "used_mb": 7621,
+   "swap": [
+    "qwen35-2b-jarvis"
+   ],
+   "forced": null
+  },
+  {
+   "t": "16:26:00",
+   "util": 98,
+   "used_mb": 7621,
+   "swap": [
+    "qwen35-2b-jarvis"
+   ],
+   "forced": null
+  },
+  {
+   "t": "16:26:03",
+   "util": 96,
+   "used_mb": 7621,
+   "swap": [
+    "qwen35-2b-jarvis"
+   ],
+   "forced": null
+  },
+  {
+   "t": "16:26:07",
+   "util": 77,
+   "used_mb": 7621,
+   "swap": [
+    "qwen35-2b-jarvis"
+   ],
+   "forced": null
+  },
+  {
+   "t": "16:26:10",
+   "util": 95,
+   "used_mb": 7621,
+   "swap": [
+    "qwen35-2b-jarvis"
+   ],
+   "forced": null
+  },
+  {
+   "t": "16:26:13",
+   "util": 98,
+   "used_mb": 7621,
+   "swap": [
+    "qwen35-2b-jarvis"
+   ],
+   "forced": null
+  },
+  {
+   "t": "16:26:16",
+   "util": 95,
+   "used_mb": 7621,
+   "swap": [
+    "qwen35-2b-jarvis"
+   ],
+   "forced": null
+  },
+  {
+   "t": "16:26:19",
+   "util": 98,
+   "used_mb": 7621,
+   "swap": [
+    "qwen35-2b-jarvis"
+   ],
+   "forced": null
+  },
+  {
+   "t": "16:26:21",
+   "util": 70,
+   "used_mb": 7621,
+   "swap": [
+    "qwen35-2b-jarvis"
+   ],
+   "forced": null
+  },
+  {
+   "t": "16:26:24",
+   "util": 97,
+   "used_mb": 7621,
+   "swap": [
+    "qwen35-2b-jarvis"
+   ],
+   "forced": null
+  },
+  {
+   "t": "16:26:26",
+   "util": 75,
+   "used_mb": 7621,
+   "swap": [
+    "qwen35-2b-jarvis"
+   ],
+   "forced": null
+  },
+  {
+   "t": "16:26:29",
+   "util": 98,
+   "used_mb": 7621,
+   "swap": [
+    "qwen35-2b-jarvis"
+   ],
+   "forced": null
+  },
+  {
+   "t": "16:26:31",
+   "util": 96,
+   "used_mb": 7621,
+   "swap": [
+    "qwen35-2b-jarvis"
+   ],
+   "forced": null
+  },
+  {
+   "t": "16:26:34",
+   "util": 74,
+   "used_mb": 7621,
+   "swap": [
+    "qwen35-2b-jarvis"
+   ],
+   "forced": null
+  },
+  {
+   "t": "16:26:36",
+   "util": 77,
+   "used_mb": 7621,
+   "swap": [
+    "qwen35-2b-jarvis"
+   ],
+   "forced": null
+  },
+  {
+   "t": "16:26:40",
+   "util": 38,
+   "used_mb": 7621,
+   "swap": [
+    "qwen35-2b-jarvis"
+   ],
+   "forced": null
+  },
+  {
+   "t": "16:26:45",
+   "util": 75,
+   "used_mb": 7621,
+   "swap": [
+    "qwen35-2b-jarvis"
+   ],
+   "forced": null
+  },
+  {
+   "t": "16:26:50",
+   "util": 98,
+   "used_mb": 7494,
+   "swap": [
+    "qwen35-2b-jarvis"
+   ],
+   "forced": null
+  },
+  {
+   "t": "16:26:53",
+   "util": 71,
+   "used_mb": 7619,
+   "swap": [
+    "qwen35-2b-jarvis"
+   ],
+   "forced": null
+  },
+  {
+   "t": "16:26:56",
+   "util": 69,
+   "used_mb": 7637,
+   "swap": [
+    "qwen35-2b-jarvis"
+   ],
+   "forced": null
+  },
+  {
+   "t": "16:26:58",
+   "util": 98,
+   "used_mb": 7637,
+   "swap": [
+    "qwen35-2b-jarvis"
+   ],
+   "forced": null
+  },
+  {
+   "t": "16:27:01",
+   "util": 76,
+   "used_mb": 7637,
+   "swap": [
+    "qwen35-2b-jarvis"
+   ],
+   "forced": null
+  },
+  {
+   "t": "16:27:03",
+   "util": 96,
+   "used_mb": 7637,
+   "swap": [
+    "qwen35-2b-jarvis"
+   ],
+   "forced": null
+  },
+  {
+   "t": "16:27:06",
+   "util": 98,
+   "used_mb": 7637,
+   "swap": [
+    "qwen35-2b-jarvis"
+   ],
+   "forced": null
+  },
+  {
+   "t": "16:27:08",
+   "util": 53,
+   "used_mb": 7637,
+   "swap": [
+    "qwen35-2b-jarvis"
+   ],
+   "forced": null
+  },
+  {
+   "t": "16:27:11",
+   "util": 80,
+   "used_mb": 7637,
+   "swap": [
+    "qwen35-2b-jarvis"
+   ],
+   "forced": null
+  },
+  {
+   "t": "16:27:14",
+   "util": 98,
+   "used_mb": 7637,
+   "swap": [
+    "qwen35-2b-jarvis"
+   ],
+   "forced": null
+  },
+  {
+   "t": "16:27:16",
+   "util": 78,
+   "used_mb": 7637,
+   "swap": [
+    "qwen35-2b-jarvis"
+   ],
+   "forced": null
+  },
+  {
+   "t": "16:27:19",
+   "util": 96,
+   "used_mb": 7637,
+   "swap": [
+    "qwen35-2b-jarvis"
+   ],
+   "forced": null
+  },
+  {
+   "t": "16:27:21",
+   "util": 96,
+   "used_mb": 7637,
+   "swap": [
+    "qwen35-2b-jarvis"
+   ],
+   "forced": null
+  },
+  {
+   "t": "16:27:24",
+   "util": 95,
+   "used_mb": 7637,
+   "swap": [
+    "qwen35-2b-jarvis"
+   ],
+   "forced": null
+  },
+  {
+   "t": "16:27:26",
+   "util": 98,
+   "used_mb": 7637,
+   "swap": [
+    "qwen35-2b-jarvis"
+   ],
+   "forced": null
+  },
+  {
+   "t": "16:27:29",
+   "util": 61,
+   "used_mb": 7637,
+   "swap": [
+    "qwen35-2b-jarvis"
+   ],
+   "forced": null
+  },
+  {
+   "t": "16:27:32",
+   "util": 94,
+   "used_mb": 7637,
+   "swap": [
+    "qwen35-2b-jarvis"
+   ],
+   "forced": null
+  },
+  {
+   "t": "16:27:34",
+   "util": 95,
+   "used_mb": 7637,
+   "swap": [
+    "qwen35-2b-jarvis"
+   ],
+   "forced": null
+  },
+  {
+   "t": "16:27:37",
+   "util": 84,
+   "used_mb": 7637,
+   "swap": [
+    "qwen35-2b-jarvis"
+   ],
+   "forced": null
+  },
+  {
+   "t": "16:27:40",
+   "util": 98,
+   "used_mb": 7637,
+   "swap": [
+    "qwen35-2b-jarvis"
+   ],
+   "forced": null
+  },
+  {
+   "t": "16:27:42",
+   "util": 73,
+   "used_mb": 7637,
+   "swap": [
+    "qwen35-2b-jarvis"
+   ],
+   "forced": null
+  },
+  {
+   "t": "16:27:45",
+   "util": 58,
+   "used_mb": 7637,
+   "swap": [
+    "qwen35-2b-jarvis"
+   ],
+   "forced": null
+  },
+  {
+   "t": "16:27:48",
+   "util": 69,
+   "used_mb": 7637,
+   "swap": [
+    "qwen35-2b-jarvis"
+   ],
+   "forced": null
+  },
+  {
+   "t": "16:27:50",
+   "util": 98,
+   "used_mb": 7637,
+   "swap": [
+    "qwen35-2b-jarvis"
+   ],
+   "forced": null
+  },
+  {
+   "t": "16:27:54",
+   "util": 76,
+   "used_mb": 7637,
+   "swap": [
+    "qwen35-2b-jarvis"
+   ],
+   "forced": null
+  },
+  {
+   "t": "16:27:57",
+   "util": 98,
+   "used_mb": 7637,
+   "swap": [
+    "qwen35-2b-jarvis"
+   ],
+   "forced": null
+  },
+  {
+   "t": "16:28:00",
+   "util": 97,
+   "used_mb": 7637,
+   "swap": [
+    "qwen35-2b-jarvis"
+   ],
+   "forced": null
+  },
+  {
+   "t": "16:28:02",
+   "util": 63,
+   "used_mb": 7637,
+   "swap": [
+    "qwen35-2b-jarvis"
+   ],
+   "forced": null
+  },
+  {
+   "t": "16:28:05",
+   "util": 96,
+   "used_mb": 7637,
+   "swap": [
+    "qwen35-2b-jarvis"
+   ],
+   "forced": null
+  },
+  {
+   "t": "16:28:08",
+   "util": 98,
+   "used_mb": 7637,
+   "swap": [
+    "qwen35-2b-jarvis"
+   ],
+   "forced": null
+  },
+  {
+   "t": "16:28:10",
+   "util": 70,
+   "used_mb": 7637,
+   "swap": [
+    "qwen35-2b-jarvis"
+   ],
+   "forced": null
+  },
+  {
+   "t": "16:28:13",
+   "util": 98,
+   "used_mb": 7621,
+   "swap": [
+    "qwen35-2b-jarvis"
+   ],
+   "forced": null
+  },
+  {
+   "t": "16:28:15",
+   "util": 71,
+   "used_mb": 7621,
+   "swap": [
+    "qwen35-2b-jarvis"
+   ],
+   "forced": null
+  },
+  {
+   "t": "16:28:18",
+   "util": 98,
+   "used_mb": 7621,
+   "swap": [
+    "qwen35-2b-jarvis"
+   ],
+   "forced": null
+  },
+  {
+   "t": "16:28:20",
+   "util": 70,
+   "used_mb": 7621,
+   "swap": [
+    "qwen35-2b-jarvis"
+   ],
+   "forced": null
+  },
+  {
+   "t": "16:28:23",
+   "util": 97,
+   "used_mb": 7621,
+   "swap": [
+    "qwen35-2b-jarvis"
+   ],
+   "forced": null
+  },
+  {
+   "t": "16:28:26",
+   "util": 95,
+   "used_mb": 7621,
+   "swap": [
+    "qwen35-2b-jarvis"
+   ],
+   "forced": null
+  },
+  {
+   "t": "16:28:29",
+   "util": 98,
+   "used_mb": 7621,
+   "swap": [
+    "qwen35-2b-jarvis"
+   ],
+   "forced": null
+  },
+  {
+   "t": "16:28:31",
+   "util": 70,
+   "used_mb": 7621,
+   "swap": [
+    "qwen35-2b-jarvis"
+   ],
+   "forced": null
+  },
+  {
+   "t": "16:28:35",
+   "util": 98,
+   "used_mb": 7621,
+   "swap": [
+    "qwen35-2b-jarvis"
+   ],
+   "forced": null
+  },
+  {
+   "t": "16:28:39",
+   "util": 74,
+   "used_mb": 7621,
+   "swap": [
+    "qwen35-2b-jarvis"
+   ],
+   "forced": null
+  },
+  {
+   "t": "16:28:42",
+   "util": 56,
+   "used_mb": 7621,
+   "swap": [
+    "qwen35-2b-jarvis"
+   ],
+   "forced": null
+  },
+  {
+   "t": "16:28:46",
+   "util": 66,
+   "used_mb": 7621,
+   "swap": [
+    "qwen35-2b-jarvis"
+   ],
+   "forced": null
+  },
+  {
+   "t": "16:28:49",
+   "util": 74,
+   "used_mb": 7621,
+   "swap": [
+    "qwen35-2b-jarvis"
+   ],
+   "forced": null
+  },
+  {
+   "t": "16:28:51",
+   "util": 98,
+   "used_mb": 7621,
+   "swap": [
+    "qwen35-2b-jarvis"
+   ],
+   "forced": null
+  },
+  {
+   "t": "16:28:55",
+   "util": 98,
+   "used_mb": 7621,
+   "swap": [
+    "qwen35-2b-jarvis"
+   ],
+   "forced": null
+  },
+  {
+   "t": "16:28:58",
+   "util": 95,
+   "used_mb": 7621,
+   "swap": [
+    "qwen35-2b-jarvis"
+   ],
+   "forced": null
+  },
+  {
+   "t": "16:29:01",
+   "util": 98,
+   "used_mb": 7621,
+   "swap": [
+    "qwen35-2b-jarvis"
+   ],
+   "forced": null
+  },
+  {
+   "t": "16:29:05",
+   "util": 96,
+   "used_mb": 7621,
+   "swap": [
+    "qwen35-2b-jarvis"
+   ],
+   "forced": null
+  },
+  {
+   "t": "16:29:09",
+   "util": 95,
+   "used_mb": 7621,
+   "swap": [
+    "qwen35-2b-jarvis"
+   ],
+   "forced": null
+  },
+  {
+   "t": "16:29:12",
+   "util": 86,
+   "used_mb": 7621,
+   "swap": [
+    "qwen35-2b-jarvis"
+   ],
+   "forced": null
+  },
+  {
+   "t": "16:29:15",
+   "util": 95,
+   "used_mb": 7621,
+   "swap": [
+    "qwen35-2b-jarvis"
+   ],
+   "forced": null
+  },
+  {
+   "t": "16:29:18",
+   "util": 78,
+   "used_mb": 7621,
+   "swap": [
+    "qwen35-2b-jarvis"
+   ],
+   "forced": null
+  },
+  {
+   "t": "16:29:22",
+   "util": 98,
+   "used_mb": 7621,
+   "swap": [
+    "qwen35-2b-jarvis"
+   ],
+   "forced": null
+  },
+  {
+   "t": "16:29:25",
+   "util": 56,
+   "used_mb": 7621,
+   "swap": [
+    "qwen35-2b-jarvis"
+   ],
+   "forced": null
+  },
+  {
+   "t": "16:29:28",
+   "util": 68,
+   "used_mb": 7621,
+   "swap": [
+    "qwen35-2b-jarvis"
+   ],
+   "forced": null
+  },
+  {
+   "t": "16:29:32",
+   "util": 96,
+   "used_mb": 7633,
+   "swap": [
+    "qwen35-2b-jarvis"
+   ],
+   "forced": null
+  },
+  {
+   "t": "16:29:35",
+   "util": 95,
+   "used_mb": 7633,
+   "swap": [
+    "qwen35-2b-jarvis"
+   ],
+   "forced": null
+  },
+  {
+   "t": "16:29:37",
+   "util": 98,
+   "used_mb": 7637,
+   "swap": [
+    "qwen35-2b-jarvis"
+   ],
+   "forced": null
+  },
+  {
+   "t": "16:29:40",
+   "util": 94,
+   "used_mb": 7637,
+   "swap": [
+    "qwen35-2b-jarvis"
+   ],
+   "forced": null
+  },
+  {
+   "t": "16:29:42",
+   "util": 66,
+   "used_mb": 7637,
+   "swap": [
+    "qwen35-2b-jarvis"
+   ],
+   "forced": null
+  },
+  {
+   "t": "16:29:45",
+   "util": 98,
+   "used_mb": 7637,
+   "swap": [
+    "qwen35-2b-jarvis"
+   ],
+   "forced": null
+  },
+  {
+   "t": "16:29:47",
+   "util": 72,
+   "used_mb": 7637,
+   "swap": [
+    "qwen35-2b-jarvis"
+   ],
+   "forced": null
+  },
+  {
+   "t": "16:29:50",
+   "util": 70,
+   "used_mb": 7637,
+   "swap": [
+    "qwen35-2b-jarvis"
+   ],
+   "forced": null
+  },
+  {
+   "t": "16:29:52",
+   "util": 98,
+   "used_mb": 7637,
+   "swap": [
+    "qwen35-2b-jarvis"
+   ],
+   "forced": null
+  },
+  {
+   "t": "16:29:55",
+   "util": 98,
+   "used_mb": 7637,
+   "swap": [
+    "qwen35-2b-jarvis"
+   ],
+   "forced": null
+  },
+  {
+   "t": "16:29:59",
+   "util": 93,
+   "used_mb": 7637,
+   "swap": [
+    "qwen35-2b-jarvis"
+   ],
+   "forced": null
+  },
+  {
+   "t": "16:30:04",
+   "util": 98,
+   "used_mb": 7637,
+   "swap": [
+    "qwen35-2b-jarvis"
+   ],
+   "forced": null
+  },
+  {
+   "t": "16:30:07",
+   "util": 94,
+   "used_mb": 7637,
+   "swap": [
+    "qwen35-2b-jarvis"
+   ],
+   "forced": null
+  }
+ ],
+ "notes": [
+  "16:20:24 waiting: another big llama-server on the GPU: [{'pid': 236315, 'name': 'llama-server', 'mb': 4138}]"
+ ],
+ "gpu_before": {
+  "util": 8,
+  "used_mb": 2501,
+  "total_mb": 12288,
+  "others": [
+   {
+    "pid": 145892,
+    "name": "python",
+    "mb": 122
+   },
+   {
+    "pid": 175829,
+    "name": "llama-server",
+    "mb": 1600
+   }
+  ],
+  "fullscreen": false,
+  "swap_running": [
+   "qwen35-2b-jarvis"
+  ],
+  "util_samples": [
+   8,
+   4,
+   5,
+   7
+  ]
+ },
+ "finished": "2026-09-27 16:30:09"
+}

@@ -1,0 +1,183 @@
+{
+  "model": "qwen35-4b",
+  "when": "2026-09-26T14:36:58",
+  "passed": 8,
+  "total": 10,
+  "rows": [
+    {
+      "id": 1,
+      "text": "What time is it?",
+      "expect": [
+        "get_time"
+      ],
+      "calls": [
+        {
+          "name": "get_time",
+          "args": {}
+        }
+      ],
+      "ok": true,
+      "reply": "It is 14:36 in Marbella, Spain.",
+      "grounded": true,
+      "turn_s": 3.54
+    },
+    {
+      "id": 2,
+      "text": "What's the time in Tokyo right now?",
+      "expect": [
+        "get_time"
+      ],
+      "calls": [
+        {
+          "name": "get_time",
+          "args": {
+            "place": "Tokyo"
+          }
+        }
+      ],
+      "ok": true,
+      "reply": "It's 21:36 in Tokyo.",
+      "grounded": true,
+      "turn_s": 0.79
+    },
+    {
+      "id": 3,
+      "text": "What's today's date?",
+      "expect": [
+        "get_time"
+      ],
+      "calls": [],
+      "ok": false,
+      "reply": "Today is Saturday 26 September 2026.",
+      "grounded": null,
+      "turn_s": 0.3
+    },
+    {
+      "id": 4,
+      "text": "What day of the week is it?",
+      "expect": [
+        "get_time"
+      ],
+      "calls": [],
+      "ok": false,
+      "reply": "It's Saturday.",
+      "grounded": null,
+      "turn_s": 0.15
+    },
+    {
+      "id": 5,
+      "text": "And in Tokyo?",
+      "expect": [
+        "get_time"
+      ],
+      "calls": [
+        {
+          "name": "get_time",
+          "args": {
+            "place": "Tokyo"
+          }
+        }
+      ],
+      "ok": true,
+      "reply": "It's 21:36 in Tokyo, sir.",
+      "grounded": true,
+      "turn_s": 0.84
+    },
+    {
+      "id": 6,
+      "text": "What's the weather going to be like tomorrow?",
+      "expect": [
+        "get_weather"
+      ],
+      "calls": [
+        {
+          "name": "get_weather",
+          "args": {
+            "when": "tomorrow"
+          }
+        }
+      ],
+      "ok": true,
+      "reply": "Tomorrow in Marbella will be sunny, with a high of 27°C and low of 18°C. There's only a 5% chance of rain.",
+      "grounded": null,
+      "turn_s": 1.16
+    },
+    {
+      "id": 7,
+      "text": "Is it going to rain today?",
+      "expect": [
+        "get_weather"
+      ],
+      "calls": [
+        {
+          "name": "get_weather",
+          "args": {
+            "when": "today"
+          }
+        }
+      ],
+      "ok": true,
+      "reply": "No rain today in Marbella. Partly cloudy at 23 degrees.",
+      "grounded": null,
+      "turn_s": 0.84
+    },
+    {
+      "id": 8,
+      "text": "Who won the Formula One race yesterday?",
+      "expect": [
+        "web_search",
+        "get_news"
+      ],
+      "calls": [
+        {
+          "name": "web_search",
+          "args": {
+            "query": "Formula One race winner Saturday 26 September 2026",
+            "recent": true
+          }
+        }
+      ],
+      "ok": true,
+      "reply": "Lando Norris won the Azerbaijan Grand Prix yesterday, according to formula1.com.",
+      "grounded": null,
+      "turn_s": 1.26
+    },
+    {
+      "id": 9,
+      "text": "What's the latest news?",
+      "expect": [
+        "get_news",
+        "web_search"
+      ],
+      "calls": [
+        {
+          "name": "get_news",
+          "args": {
+            "limit": 3
+          }
+        }
+      ],
+      "ok": true,
+      "reply": "According to BBC, talks have resumed in Geneva. Reuters reports markets are steady. ČT24 says floods are easing in Moravia.",
+      "grounded": null,
+      "turn_s": 1.04
+    },
+    {
+      "id": 10,
+      "text": "How hot is my graphics card right now?",
+      "expect": [
+        "system_status"
+      ],
+      "calls": [
+        {
+          "name": "system_status",
+          "args": {}
+        }
+      ],
+      "ok": true,
+      "reply": "Your graphics card is 48 degrees Celsius right now.",
+      "grounded": null,
+      "turn_s": 0.6
+    }
+  ]
+}

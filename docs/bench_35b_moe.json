@@ -1,0 +1,54 @@
+[
+ {
+  "model": "jarvis-moe34",
+  "gpu_used_before_mib": 5944,
+  "cold_load_s": 10.14,
+  "ttft_ms": 399,
+  "voice": {
+   "tokens": 300,
+   "gen_tok_s": 49.72,
+   "prompt_tok_s": 92.3,
+   "wall_s": 6.25
+  },
+  "deep": {
+   "tokens": 1500,
+   "gen_tok_s": 51.9,
+   "prompt_tok_s": 96.1,
+   "wall_s": 29.15
+  },
+  "server_vram_mib": 5230,
+  "server_mem_mib": {
+   "VmRSS": 14249,
+   "RssAnon": 966,
+   "RssFile": 13183
+  },
+  "gpu_used_with_both_mib": 11180,
+  "fast_still_loaded": true
+ },
+ {
+  "model": "jarvis-moe99",
+  "gpu_used_before_mib": 5944,
+  "cold_load_s": 2.44,
+  "ttft_ms": 439,
+  "voice": {
+   "tokens": 300,
+   "gen_tok_s": 49.25,
+   "prompt_tok_s": 80.0,
+   "wall_s": 6.35
+  },
+  "deep": {
+   "tokens": 1500,
+   "gen_tok_s": 49.2,
+   "prompt_tok_s": 100.4,
+   "wall_s": 30.73
+  },
+  "server_vram_mib": 2972,
+  "server_mem_mib": {
+   "VmRSS": 17787,
+   "RssAnon": 986,
+   "RssFile": 16702
+  },
+  "gpu_used_with_both_mib": 8922,
+  "fast_still_loaded": true
+ }
+]

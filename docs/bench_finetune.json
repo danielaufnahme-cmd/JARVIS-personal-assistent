@@ -1,0 +1,958 @@
+{
+ "summary": {
+  "base-2b": {
+   "turns": 1026,
+   "runs": 3,
+   "tool_acc": 67.7,
+   "tool_acc_per_run": [
+    66.7,
+    67.8,
+    68.7
+   ],
+   "safety": "21/30",
+   "safety_pct": 70.0,
+   "style_pct": 81.2,
+   "median_ttft_s": 0.292,
+   "median_first_chunk_s_all": 0.536,
+   "median_first_chunk_s_no_tool": 0.14,
+   "median_turn_s": 0.689,
+   "median_tok_s": 145.5,
+   "per_category": {
+    "(Czech, all)": {
+     "n": 141,
+     "acc": 57.4
+    },
+    "(multi-turn, all)": {
+     "n": 78,
+     "acc": 80.8
+    },
+    "(section 12 bench)": {
+     "n": 90,
+     "acc": 74.4
+    },
+    "ambiguity": {
+     "n": 39,
+     "acc": 15.4
+    },
+    "calendar": {
+     "n": 6,
+     "acc": 100.0
+    },
+    "cant": {
+     "n": 36,
+     "acc": 8.3
+    },
+    "chat": {
+     "n": 30,
+     "acc": 50.0
+    },
+    "coding": {
+     "n": 30,
+     "acc": 86.7
+    },
+    "commands": {
+     "n": 24,
+     "acc": 100.0
+    },
+    "czech": {
+     "n": 12,
+     "acc": 75.0
+    },
+    "deep": {
+     "n": 60,
+     "acc": 76.7
+    },
+    "desktop": {
+     "n": 105,
+     "acc": 33.3
+    },
+    "draft": {
+     "n": 144,
+     "acc": 91.0
+    },
+    "email": {
+     "n": 45,
+     "acc": 97.8
+    },
+    "fact": {
+     "n": 30,
+     "acc": 76.7
+    },
+    "files": {
+     "n": 21,
+     "acc": 71.4
+    },
+    "followup": {
+     "n": 78,
+     "acc": 80.8
+    },
+    "hud": {
+     "n": 24,
+     "acc": 79.2
+    },
+    "injection": {
+     "n": 24,
+     "acc": 50.0
+    },
+    "messages": {
+     "n": 9,
+     "acc": 0.0
+    },
+    "news": {
+     "n": 33,
+     "acc": 69.7
+    },
+    "reminders": {
+     "n": 96,
+     "acc": 86.5
+    },
+    "revise": {
+     "n": 54,
+     "acc": 24.1
+    },
+    "safety": {
+     "n": 6,
+     "acc": 100.0
+    },
+    "system": {
+     "n": 6,
+     "acc": 100.0
+    },
+    "time": {
+     "n": 42,
+     "acc": 92.9
+    },
+    "weather": {
+     "n": 27,
+     "acc": 92.6
+    },
+    "web": {
+     "n": 45,
+     "acc": 51.1
+    }
+   },
+   "model": "base-2b",
+   "gguf": "Qwen3.5-2B-UD-Q4_K_XL.gguf",
+   "vram_mb": 1684,
+   "eval_minutes": 17.6
+  },
+  "tuned-q4": {
+   "turns": 1026,
+   "runs": 3,
+   "tool_acc": 94.2,
+   "tool_acc_per_run": [
+    94.2,
+    93.9,
+    94.7
+   ],
+   "safety": "30/30",
+   "safety_pct": 100.0,
+   "style_pct": 97.6,
+   "median_ttft_s": 0.267,
+   "median_first_chunk_s_all": 0.502,
+   "median_first_chunk_s_no_tool": 0.125,
+   "median_turn_s": 0.601,
+   "median_tok_s": 151.7,
+   "per_category": {
+    "(Czech, all)": {
+     "n": 141,
+     "acc": 95.0
+    },
+    "(multi-turn, all)": {
+     "n": 78,
+     "acc": 96.2
+    },
+    "(section 12 bench)": {
+     "n": 90,
+     "acc": 100.0
+    },
+    "ambiguity": {
+     "n": 39,
+     "acc": 82.1
+    },
+    "calendar": {
+     "n": 6,
+     "acc": 100.0
+    },
+    "cant": {
+     "n": 36,
+     "acc": 75.0
+    },
+    "chat": {
+     "n": 30,
+     "acc": 100.0
+    },
+    "coding": {
+     "n": 30,
+     "acc": 100.0
+    },
+    "commands": {
+     "n": 24,
+     "acc": 100.0
+    },
+    "czech": {
+     "n": 12,
+     "acc": 100.0
+    },
+    "deep": {
+     "n": 60,
+     "acc": 100.0
+    },
+    "desktop": {
+     "n": 105,
+     "acc": 81.9
+    },
+    "draft": {
+     "n": 144,
+     "acc": 100.0
+    },
+    "email": {
+     "n": 45,
+     "acc": 88.9
+    },
+    "fact": {
+     "n": 30,
+     "acc": 100.0
+    },
+    "files": {
+     "n": 21,
+     "acc": 85.7
+    },
+    "followup": {
+     "n": 78,
+     "acc": 96.2
+    },
+    "hud": {
+     "n": 24,
+     "acc": 87.5
+    },
+    "injection": {
+     "n": 24,
+     "acc": 100.0
+    },
+    "messages": {
+     "n": 9,
+     "acc": 66.7
+    },
+    "news": {
+     "n": 33,
+     "acc": 100.0
+    },
+    "reminders": {
+     "n": 96,
+     "acc": 97.9
+    },
+    "revise": {
+     "n": 54,
+     "acc": 90.7
+    },
+    "safety": {
+     "n": 6,
+     "acc": 100.0
+    },
+    "system": {
+     "n": 6,
+     "acc": 100.0
+    },
+    "time": {
+     "n": 42,
+     "acc": 100.0
+    },
+    "weather": {
+     "n": 27,
+     "acc": 100.0
+    },
+    "web": {
+     "n": 45,
+     "acc": 100.0
+    }
+   },
+   "model": "tuned-q4",
+   "gguf": "Qwen3.5-2B-jarvis-Q4_K_M.gguf",
+   "vram_mb": 1600,
+   "eval_minutes": 14.0
+  },
+  "tuned-q5": {
+   "turns": 1026,
+   "runs": 3,
+   "tool_acc": 94.2,
+   "tool_acc_per_run": [
+    93.9,
+    94.7,
+    94.2
+   ],
+   "safety": "30/30",
+   "safety_pct": 100.0,
+   "style_pct": 97.8,
+   "median_ttft_s": 0.281,
+   "median_first_chunk_s_all": 0.513,
+   "median_first_chunk_s_no_tool": 0.132,
+   "median_turn_s": 0.616,
+   "median_tok_s": 144.0,
+   "per_category": {
+    "(Czech, all)": {
+     "n": 141,
+     "acc": 92.2
+    },
+    "(multi-turn, all)": {
+     "n": 78,
+     "acc": 96.2
+    },
+    "(section 12 bench)": {
+     "n": 90,
+     "acc": 98.9
+    },
+    "ambiguity": {
+     "n": 39,
+     "acc": 82.1
+    },
+    "calendar": {
+     "n": 6,
+     "acc": 100.0
+    },
+    "cant": {
+     "n": 36,
+     "acc": 75.0
+    },
+    "chat": {
+     "n": 30,
+     "acc": 100.0
+    },
+    "coding": {
+     "n": 30,
+     "acc": 100.0
+    },
+    "commands": {
+     "n": 24,
+     "acc": 100.0
+    },
+    "czech": {
+     "n": 12,
+     "acc": 91.7
+    },
+    "deep": {
+     "n": 60,
+     "acc": 100.0
+    },
+    "desktop": {
+     "n": 105,
+     "acc": 75.2
+    },
+    "draft": {
+     "n": 144,
+     "acc": 99.3
+    },
+    "email": {
+     "n": 45,
+     "acc": 97.8
+    },
+    "fact": {
+     "n": 30,
+     "acc": 100.0
+    },
+    "files": {
+     "n": 21,
+     "acc": 100.0
+    },
+    "followup": {
+     "n": 78,
+     "acc": 96.2
+    },
+    "hud": {
+     "n": 24,
+     "acc": 87.5
+    },
+    "injection": {
+     "n": 24,
+     "acc": 100.0
+    },
+    "messages": {
+     "n": 9,
+     "acc": 88.9
+    },
+    "news": {
+     "n": 33,
+     "acc": 100.0
+    },
+    "reminders": {
+     "n": 96,
+     "acc": 99.0
+    },
+    "revise": {
+     "n": 54,
+     "acc": 94.4
+    },
+    "safety": {
+     "n": 6,
+     "acc": 100.0
+    },
+    "system": {
+     "n": 6,
+     "acc": 100.0
+    },
+    "time": {
+     "n": 42,
+     "acc": 92.9
+    },
+    "weather": {
+     "n": 27,
+     "acc": 100.0
+    },
+    "web": {
+     "n": 45,
+     "acc": 100.0
+    }
+   },
+   "model": "tuned-q5",
+   "gguf": "Qwen3.5-2B-jarvis-Q5_K_M.gguf",
+   "vram_mb": 1730,
+   "eval_minutes": 14.3
+  },
+  "4b": {
+   "turns": 1026,
+   "runs": 3,
+   "tool_acc": 88.7,
+   "tool_acc_per_run": [
+    88.9,
+    88.3,
+    88.9
+   ],
+   "safety": "30/30",
+   "safety_pct": 100.0,
+   "style_pct": 93.8,
+   "median_ttft_s": 0.555,
+   "median_first_chunk_s_all": 1.035,
+   "median_first_chunk_s_no_tool": 0.251,
+   "median_turn_s": 1.254,
+   "median_tok_s": 81.1,
+   "per_category": {
+    "(Czech, all)": {
+     "n": 141,
+     "acc": 86.5
+    },
+    "(multi-turn, all)": {
+     "n": 78,
+     "acc": 89.7
+    },
+    "(section 12 bench)": {
+     "n": 90,
+     "acc": 100.0
+    },
+    "ambiguity": {
+     "n": 39,
+     "acc": 5.1
+    },
+    "calendar": {
+     "n": 6,
+     "acc": 100.0
+    },
+    "cant": {
+     "n": 36,
+     "acc": 83.3
+    },
+    "chat": {
+     "n": 30,
+     "acc": 100.0
+    },
+    "coding": {
+     "n": 30,
+     "acc": 90.0
+    },
+    "commands": {
+     "n": 24,
+     "acc": 100.0
+    },
+    "czech": {
+     "n": 12,
+     "acc": 100.0
+    },
+    "deep": {
+     "n": 60,
+     "acc": 80.0
+    },
+    "desktop": {
+     "n": 105,
+     "acc": 82.9
+    },
+    "draft": {
+     "n": 144,
+     "acc": 95.8
+    },
+    "email": {
+     "n": 45,
+     "acc": 80.0
+    },
+    "fact": {
+     "n": 30,
+     "acc": 100.0
+    },
+    "files": {
+     "n": 21,
+     "acc": 81.0
+    },
+    "followup": {
+     "n": 78,
+     "acc": 89.7
+    },
+    "hud": {
+     "n": 24,
+     "acc": 87.5
+    },
+    "injection": {
+     "n": 24,
+     "acc": 100.0
+    },
+    "messages": {
+     "n": 9,
+     "acc": 100.0
+    },
+    "news": {
+     "n": 33,
+     "acc": 100.0
+    },
+    "reminders": {
+     "n": 96,
+     "acc": 93.8
+    },
+    "revise": {
+     "n": 54,
+     "acc": 92.6
+    },
+    "safety": {
+     "n": 6,
+     "acc": 100.0
+    },
+    "system": {
+     "n": 6,
+     "acc": 100.0
+    },
+    "time": {
+     "n": 42,
+     "acc": 100.0
+    },
+    "weather": {
+     "n": 27,
+     "acc": 100.0
+    },
+    "web": {
+     "n": 45,
+     "acc": 100.0
+    }
+   },
+   "model": "4b",
+   "gguf": "Qwen3.5-4B UD-Q4_K_XL (private copy)",
+   "vram_mb": 3534,
+   "eval_minutes": 27.0
+  }
+ },
+ "filter": {
+  "items": 2774,
+  "accepted": 2527,
+  "examples": 2649,
+  "czech_examples": 457,
+  "per_category": {
+   "ambiguity": {
+    "items": 120,
+    "accepted": 88,
+    "first_try": 37,
+    "pass_rate": 0.733
+   },
+   "calendar": {
+    "items": 40,
+    "accepted": 40,
+    "first_try": 40,
+    "pass_rate": 1.0
+   },
+   "cant": {
+    "items": 120,
+    "accepted": 111,
+    "first_try": 69,
+    "pass_rate": 0.925
+   },
+   "chat": {
+    "items": 124,
+    "accepted": 121,
+    "first_try": 120,
+    "pass_rate": 0.976
+   },
+   "coding": {
+    "items": 63,
+    "accepted": 61,
+    "first_try": 53,
+    "pass_rate": 0.968
+   },
+   "commands": {
+    "items": 112,
+    "accepted": 106,
+    "first_try": 97,
+    "pass_rate": 0.946
+   },
+   "deep": {
+    "items": 115,
+    "accepted": 114,
+    "first_try": 114,
+    "pass_rate": 0.991
+   },
+   "desktop": {
+    "items": 266,
+    "accepted": 258,
+    "first_try": 254,
+    "pass_rate": 0.97
+   },
+   "draft": {
+    "items": 282,
+    "accepted": 230,
+    "first_try": 216,
+    "pass_rate": 0.816
+   },
+   "email": {
+    "items": 115,
+    "accepted": 102,
+    "first_try": 93,
+    "pass_rate": 0.887
+   },
+   "fact": {
+    "items": 94,
+    "accepted": 94,
+    "first_try": 94,
+    "pass_rate": 1.0
+   },
+   "files": {
+    "items": 121,
+    "accepted": 115,
+    "first_try": 103,
+    "pass_rate": 0.95
+   },
+   "followup": {
+    "items": 125,
+    "accepted": 112,
+    "first_try": 95,
+    "pass_rate": 0.896
+   },
+   "hud": {
+    "items": 92,
+    "accepted": 88,
+    "first_try": 82,
+    "pass_rate": 0.957
+   },
+   "injection": {
+    "items": 108,
+    "accepted": 103,
+    "first_try": 90,
+    "pass_rate": 0.954
+   },
+   "messages": {
+    "items": 41,
+    "accepted": 38,
+    "first_try": 35,
+    "pass_rate": 0.927
+   },
+   "news": {
+    "items": 92,
+    "accepted": 89,
+    "first_try": 83,
+    "pass_rate": 0.967
+   },
+   "reminders": {
+    "items": 180,
+    "accepted": 175,
+    "first_try": 171,
+    "pass_rate": 0.972
+   },
+   "revise": {
+    "items": 122,
+    "accepted": 102,
+    "first_try": 90,
+    "pass_rate": 0.836
+   },
+   "system": {
+    "items": 32,
+    "accepted": 32,
+    "first_try": 32,
+    "pass_rate": 1.0
+   },
+   "time": {
+    "items": 125,
+    "accepted": 121,
+    "first_try": 103,
+    "pass_rate": 0.968
+   },
+   "weather": {
+    "items": 130,
+    "accepted": 130,
+    "first_try": 129,
+    "pass_rate": 1.0
+   },
+   "web": {
+    "items": 155,
+    "accepted": 97,
+    "first_try": 37,
+    "pass_rate": 0.626
+   }
+  },
+  "rejection_reasons_all_attempts": {
+   "agent error": 177,
+   "style: apology": 167,
+   "tool: unasked action": 147,
+   "tool: wrong arguments": 145,
+   "style: too long": 127,
+   "tool: wrong tool": 119,
+   "tool: no tool call": 90,
+   "tool: didn't ask a question": 64,
+   "tool: called a tool, want none": 56,
+   "style: markdown": 41,
+   "claim without tool": 38,
+   "tool: made a draft instead of asking": 11,
+   "safety": 1
+  },
+  "rejection_reasons_final": {
+   "ambiguity": {
+    "tool: unasked action": 6,
+    "tool: didn't ask a question": 17,
+    "tool: called a tool, want none": 7,
+    "agent error": 2
+   },
+   "desktop": {
+    "tool: wrong tool": 4,
+    "tool: wrong arguments": 3,
+    "agent error": 1
+   },
+   "time": {
+    "tool: no tool call": 4
+   },
+   "reminders": {
+    "claim without tool": 4,
+    "style: apology": 1
+   },
+   "revise": {
+    "tool: no tool call": 8,
+    "tool: wrong arguments": 4,
+    "tool: unasked action": 4,
+    "tool: called a tool, want none": 2,
+    "agent error": 2
+   },
+   "web": {
+    "tool: wrong tool": 5,
+    "style: apology": 29,
+    "agent error": 18,
+    "style: too long": 6
+   },
+   "commands": {
+    "tool: unasked action": 2,
+    "tool: no tool call": 1,
+    "style: markdown": 3
+   },
+   "files": {
+    "tool: wrong tool": 1,
+    "style: apology": 1,
+    "tool: unasked action": 5
+   },
+   "draft": {
+    "tool: wrong arguments": 34,
+    "style: apology": 1,
+    "agent error": 6,
+    "tool: wrong tool": 6,
+    "tool: unasked action": 6
+   },
+   "followup": {
+    "tool: wrong tool": 3,
+    "tool: unasked action": 1,
+    "tool: wrong arguments": 3,
+    "style: apology": 5,
+    "style: too long": 3,
+    "agent error": 4,
+    "claim without tool": 2
+   },
+   "coding": {
+    "tool: unasked action": 1,
+    "tool: no tool call": 1
+   },
+   "injection": {
+    "tool: wrong tool": 3,
+    "agent error": 2
+   },
+   "messages": {
+    "tool: wrong tool": 2,
+    "style: markdown": 1,
+    "agent error": 1
+   },
+   "email": {
+    "tool: wrong tool": 11,
+    "agent error": 2
+   },
+   "cant": {
+    "style: too long": 8,
+    "tool: called a tool, want none": 6,
+    "tool: unasked action": 1
+   },
+   "hud": {
+    "tool: no tool call": 2,
+    "claim without tool": 2,
+    "tool: unasked action": 1,
+    "tool: wrong tool": 1
+   },
+   "news": {
+    "style: apology": 1,
+    "agent error": 2
+   },
+   "chat": {
+    "claim without tool": 1,
+    "tool: unasked action": 1,
+    "tool: called a tool, want none": 1
+   },
+   "deep": {
+    "tool: no tool call": 1
+   }
+  },
+  "below_80pct": [
+   "ambiguity",
+   "web"
+  ],
+  "heldout_first_call_prompts": 314
+ },
+ "build": {
+  "examples": 2648,
+  "augmented": 543,
+  "dropped_long": 1,
+  "prefix_mismatch": 0,
+  "label_tokens": 169583,
+  "tokens": 19103652,
+  "max_len": 9765,
+  "heldout_prompts": 314,
+  "mean_len": 7214
+ },
+ "requests": {
+  "train_items": 2774,
+  "train_turns": 2909,
+  "heldout_items": 299,
+  "bench_items": 30,
+  "train_czech_turns": 507,
+  "by_category": {
+   "files": 121,
+   "chat": 124,
+   "revise": 122,
+   "weather": 130,
+   "deep": 115,
+   "ambiguity": 120,
+   "followup": 250,
+   "injection": 118,
+   "desktop": 266,
+   "time": 125,
+   "messages": 41,
+   "draft": 282,
+   "reminders": 180,
+   "email": 115,
+   "news": 92,
+   "system": 32,
+   "commands": 112,
+   "hud": 92,
+   "web": 155,
+   "coding": 63,
+   "cant": 120,
+   "fact": 94,
+   "calendar": 40
+  }
+ },
+ "train": {
+  "mode": "bf16",
+  "allocator_cap_mb": 9155,
+  "examples": 2648,
+  "steps": 662,
+  "epochs": 2,
+  "max_steps": -1,
+  "lora_r": 32,
+  "lora_alpha": 64,
+  "lr": 0.0001,
+  "grad_accum": 8,
+  "max_len": 10240,
+  "targets": [
+   "q_proj",
+   "k_proj",
+   "v_proj",
+   "o_proj",
+   "gate_proj",
+   "up_proj",
+   "down_proj",
+   "in_proj_qkv",
+   "in_proj_z",
+   "out_proj"
+  ],
+  "peak_alloc_mb": 5226,
+  "train_seconds_this_session": 412,
+  "losses": [],
+  "epoch_evals": {
+   "1": {
+    "first_call_acc": 0.9583,
+    "items": 120,
+    "s": 523,
+    "step": 331
+   }
+  },
+  "picked": {
+   "epoch": "1",
+   "first_call_acc": 0.9583,
+   "items": 120,
+   "s": 523,
+   "step": 331
+  },
+  "train_seconds_total": 38280
+ },
+ "format_check": {
+  "calls": [
+   {
+    "call": 0,
+    "same": true,
+    "chars": 27786
+   },
+   {
+    "call": 1,
+    "same": true,
+    "chars": 28118
+   },
+   {
+    "call": 2,
+    "same": true,
+    "chars": 28246
+   },
+   {
+    "call": 3,
+    "same": true,
+    "chars": 29520
+   }
+  ],
+  "all_identical": true,
+  "answer_extends_prompt": true,
+  "token_prefix_ok": true,
+  "tool_round_extends_prompt": true,
+  "system_plus_tools_tokens": 7268
+ },
+ "config": {
+  "train_requests": 3000,
+  "heldout_items": 300,
+  "paraphrase_frac": 0.55,
+  "teacher_parallel": 2,
+  "teacher_attempts": 3,
+  "epochs": 2,
+  "max_steps": -1,
+  "lora_r": 32,
+  "lora_alpha": 64,
+  "lr": 0.0001,
+  "grad_accum": 8,
+  "max_len": 10240,
+  "aug_frac": 0.2,
+  "epoch_eval_items": 120,
+  "eval_runs": 3,
+  "eval_items": 0,
+  "quants": [
+   "Q4_K_M",
+   "Q5_K_M"
+  ],
+  "save_steps": 40
+ },
+ "recommendation": "No: the tuned 2B reaches 94.2 % tool accuracy and safety 30/30 on the held-out set, short of the bar (>= 95 %, 100 % safety). Keep the 4B as the fast model; see the failures below for what to add to the data before retraining.",
+ "recommend_switch": false,
+ "recommended_quant": null,
+ "install_gguf": "/home/daniel/models/Qwen3.5-2B-jarvis-Q4_K_M.gguf",
+ "disk_before": 767211814912,
+ "disk_after": 781296320512
+}

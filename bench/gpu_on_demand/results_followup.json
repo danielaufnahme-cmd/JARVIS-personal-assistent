@@ -1,0 +1,115 @@
+{
+ "when": "2026-09-27 17:25:02",
+ "vad_wait_s": 0.73,
+ "prefix_system_chars": 10505,
+ "tools": 52,
+ "followup_after_idle_out": {
+  "history_turns": 3,
+  "history_chars_div4": 449,
+  "on_demand_median_s": 1.07,
+  "resident_median_s": 1.05,
+  "added_s": 0.02,
+  "on_demand": [
+   {
+    "eos_to_first_s": 1.07,
+    "request_to_first_s": 0.34,
+    "eos_to_done_s": 1.07,
+    "warm": {
+     "how": "restore",
+     "s": 1.585,
+     "tokens": 8277,
+     "restore_ms": 28.438,
+     "history_tokens": 344,
+     "history_s": 0.3
+    },
+    "text": "",
+    "tools": [
+     "get_time"
+    ]
+   },
+   {
+    "eos_to_first_s": 1.417,
+    "request_to_first_s": 0.685,
+    "eos_to_done_s": 1.417,
+    "warm": {
+     "how": "restore",
+     "s": 2.55,
+     "tokens": 8277,
+     "restore_ms": 28.719,
+     "history_tokens": 279,
+     "history_s": 0.263
+    },
+    "text": "",
+    "tools": [
+     "get_time"
+    ]
+   },
+   {
+    "eos_to_first_s": 1.07,
+    "request_to_first_s": 0.338,
+    "eos_to_done_s": 1.07,
+    "warm": {
+     "how": "restore",
+     "s": 1.455,
+     "tokens": 8277,
+     "restore_ms": 30.862,
+     "history_tokens": 69,
+     "history_s": 0.166
+    },
+    "text": "",
+    "tools": [
+     "get_time"
+    ]
+   }
+  ],
+  "resident": [
+   {
+    "eos_to_first_s": 1.071,
+    "request_to_first_s": 0.339,
+    "eos_to_done_s": 1.071,
+    "warm": {
+     "how": "primer",
+     "s": 0.081
+    },
+    "text": "",
+    "tools": [
+     "get_time"
+    ]
+   },
+   {
+    "eos_to_first_s": 1.05,
+    "request_to_first_s": 0.319,
+    "eos_to_done_s": 1.05,
+    "warm": {
+     "how": "primer",
+     "s": 0.07
+    },
+    "text": "",
+    "tools": [
+     "get_time"
+    ]
+   },
+   {
+    "eos_to_first_s": 1.043,
+    "request_to_first_s": 0.31,
+    "eos_to_done_s": 1.043,
+    "warm": {
+     "how": "primer",
+     "s": 0.065
+    },
+    "text": "",
+    "tools": [
+     "get_time"
+    ]
+   }
+  ]
+ },
+ "eos_to_first_output": {},
+ "ram": {
+  "gguf_gib": 2.71,
+  "page_cache_fraction": 1.0,
+  "page_cache_gib": 2.71,
+  "slot_file_mib": null,
+  "memlock_limit_kib": 8192
+ }
+}

@@ -1,0 +1,184 @@
+#!/usr/bin/env python3
+"""jarvisctl: send one command to jarvisd over its unix socket (stdlib only).
+
+  jarvisctl hud toggle|open|close
+  jarvisctl session toggle|start|stop
+  jarvisctl say "text"
+  jarvisctl unload
+  jarvisctl draft confirm|cancel ID
+  jarvisctl ping
+  jarvisctl status              print the daemon's snapshot
+  jarvisctl watch               print events until Ctrl-C
+  jarvisctl raw '{"cmd":...}'   send any command
+  jarvisctl setup email [--remove]            store/remove the Gmail app password (system keyring)
+  jarvisctl setup contacts FILE.vcf|FILE.csv  import contacts (merges by name)
+  jarvisctl setup firm geonix [--remove]      store/remove the firm tracker's read-only token (keyring)
+
+Socket: $JARVIS_SOCKET, else [ipc] socket in ~/.config/jarvis/config.toml, else $XDG_RUNTIME_DIR/jarvis.sock.
+Exit codes: 0 ok, 1 error ack / no reply, 2 daemon not running, 64 usage.
+"""
+
+import json
+import os
+import socket
+import sys
+import time
+from pathlib import Path
+
+TIMEOUT_S = 2.0
+
+
+def socket_path():
+    env = os.environ.get("JARVIS_SOCKET")
+    if env:
+        return Path(env).expanduser()
+    cfg_home = Path(os.environ.get("XDG_CONFIG_HOME") or Path.home() / ".config")
+    try:
+        import tomllib
+
+        configured = tomllib.loads((cfg_home / "jarvis" / "config.toml").read_text()).get("ipc", {}).get("socket")
+        if configured:
+            return Path(configured).expanduser()
+    except Exception:
+        pass
+    runtime = os.environ.get("XDG_RUNTIME_DIR") or f"/run/user/{os.getuid()}"
+    return Path(runtime) / "jarvis.sock"
+
+
+def usage(msg=None):
+    if msg:
+        print(f"jarvisctl: {msg}", file=sys.stderr)
+    print(__doc__.split("\n\n")[1], file=sys.stderr)
+    sys.exit(64)
+
+
+def parse(args):
+    if not args:
+        usage()
+    verb, rest = args[0], args[1:]
+    if verb in ("hud", "session"):
+        allowed = ("toggle", "open", "close") if verb == "hud" else ("toggle", "start", "stop")
+        if len(rest) != 1 or rest[0] not in allowed:
+            usage(f"{verb} needs one of: {', '.join(allowed)}")
+        return {"cmd": f"{verb}.{rest[0]}"}
+    if verb == "say":
+        text = " ".join(rest).strip()
+        if not text:
+            usage('say needs text, e.g. jarvisctl say "what time is it"')
+        return {"cmd": "say", "text": text}
+    if verb == "unload" and not rest:
+        return {"cmd": "model.unload"}
+    if verb == "ping" and not rest:
+        return {"cmd": "ping"}
+    if verb == "draft":
+        if len(rest) != 2 or rest[0] not in ("confirm", "cancel"):
+            usage("draft needs confirm|cancel ID")
+        return {"cmd": f"draft.{rest[0]}", "id": rest[1]}
+    if verb == "raw" and len(rest) == 1:
+        try:
+            cmd = json.loads(rest[0])
+        except json.JSONDecodeError as exc:
+            usage(f"raw: bad json: {exc}")
+        if not isinstance(cmd, dict) or "cmd" not in cmd:
+            usage('raw needs a JSON object with "cmd"')
+        return cmd
+    if verb in ("watch", "status") and not rest:
+        return verb
+    usage(f"unknown command: {' '.join(args)}")
+
+
+def connect(path):
+    sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+    try:
+        sock.connect(str(path))
+    except (FileNotFoundError, ConnectionRefusedError, NotADirectoryError):
+        print(f"jarvisctl: jarvisd is not running (no daemon at {path})", file=sys.stderr)
+        sys.exit(2)
+    except PermissionError:
+        print(f"jarvisctl: permission denied on {path}", file=sys.stderr)
+        sys.exit(2)
+    return sock
+
+
+def lines(sock):
+    buf = b""
+    while True:
+        chunk = sock.recv(65536)
+        if not chunk:
+            return
+        buf += chunk
+        while b"\n" in buf:
+            line, buf = buf.split(b"\n", 1)
+            if line.strip():
+                yield line
+
+
+def run_setup(args):
+    """`setup` needs the project's dependencies (keyring, imap-tools, …), so it runs in the uv venv."""
+    repo = Path(__file__).resolve().parent.parent
+    env = dict(os.environ)
+    env["PYTHONPATH"] = str(repo) + (os.pathsep + env["PYTHONPATH"] if env.get("PYTHONPATH") else "")
+    python = repo / ".venv" / "bin" / "python"
+    argv = ["-m", "jarvis.integrations.setup", *args]
+    if python.exists():
+        os.execve(str(python), [str(python), *argv], env)
+    for uv in (Path.home() / ".local" / "bin" / "uv", Path("/usr/bin/uv")):
+        if uv.exists():
+            os.execve(str(uv), [str(uv), "run", "--project", str(repo), "python", *argv], env)
+    print("jarvisctl: can't find the project venv; run `uv sync` in " + str(repo), file=sys.stderr)
+    return 1
+
+
+def main(args):
+    if args and args[0] == "setup":
+        return run_setup(args[1:])
+    action = parse(args)
+    path = socket_path()
+    sock = connect(path)
+
+    if action == "watch":
+        try:
+            for line in lines(sock):
+                print(line.decode(errors="replace"), flush=True)
+        except KeyboardInterrupt:
+            return 0
+        except BrokenPipeError:
+            return 0
+        print("jarvisctl: connection closed by jarvisd", file=sys.stderr)
+        return 1
+
+    sock.settimeout(TIMEOUT_S)
+    deadline = time.monotonic() + TIMEOUT_S
+    if action != "status":
+        sock.sendall((json.dumps(action) + "\n").encode())
+    try:
+        for line in lines(sock):
+            try:
+                msg = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            if action == "status" and msg.get("ev") == "snapshot":
+                print(json.dumps(msg, indent=2, ensure_ascii=False))
+                return 0
+            if msg.get("ev") == "ack" and msg.get("cmd") == action.get("cmd"):
+                if msg.get("ok"):
+                    if "result" in msg and action.get("cmd") == "ping":
+                        print(msg["result"])
+                    return 0
+                print(f"jarvisctl: {msg.get('error', 'error')}", file=sys.stderr)
+                return 1
+            sock.settimeout(max(0.01, deadline - time.monotonic()))
+    except (socket.timeout, TimeoutError):
+        pass
+    except OSError as exc:
+        print(f"jarvisctl: connection to jarvisd failed: {exc}", file=sys.stderr)
+        return 1
+    print(f"jarvisctl: no reply from jarvisd within {TIMEOUT_S:g} s", file=sys.stderr)
+    return 1
+
+
+if __name__ == "__main__":
+    try:
+        sys.exit(main(sys.argv[1:]))
+    except KeyboardInterrupt:
+        sys.exit(130)

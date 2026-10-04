@@ -1,0 +1,118 @@
+# JARVIS "present yourself" showcase (section 24).
+#
+# Say "Jarvis, present yourself" (or "show yourself", "introduce yourself", "who are you", "what are you", "show me
+# what you can do")
+# and JARVIS speaks the `say` lines while the steps below run on screen. No language model is involved: this file
+# IS the demonstration. Edit it freely; `uv run python -m jarvis.integrations.showcase check` validates it, and a
+# broken file is refused with the step number and what is wrong (JARVIS then falls back to the built-in default).
+#
+# Step types (one per [[step]]):
+#   say       = "text"  or  say.en / say.de / say.cs / say.es   (spoken in parallel with the next steps)
+#               wait = true   waits until this line has been spoken before the next step
+#   workspace = "free"  (the next EMPTY workspace, 1-10)  or a number (used only if it is empty, else the next free)
+#   open_url  = "https://…"    a NEW Zen window on the current workspace (never a tab in an existing window)
+#   open_app  = "text editor"   an app name as JARVIS's open_app knows it ("text editor" = Neovim in Ghostty), or a
+#               command on PATH ("lowriter --nologo --norestore" for LibreOffice Writer); waits until its window is
+#               mapped and focused. expect = "nvim": also wait until that program runs inside the window, and check it
+#               still does before every type/key step
+#   type      = "text"  or  type.en / type.de / …  typed with wtype, word by word at `cps` characters a second;
+#               a newline presses Enter. Only into the window the last open_app/open_url opened (checked each word).
+#   key       = "ctrl+b"   one key or shortcut into that same window ("enter", "ctrl+e", "shift+tab", …)
+#   wait      = 1.5  (seconds)   or  wait = "speech"  (until JARVIS has finished speaking)
+#   hud       = true   open JARVIS's fullscreen HUD (like SUPER+J); nothing can be typed after it
+#   return    = true   back to the workspace and window the user started on
+# Placeholders in say/type: {greeting} (good morning/afternoon/evening, localised) and {address} ("sir").
+# The trigger's language picks say.<lang> / type.<lang> (English when a step has no such line).
+#
+# Stop at any time: say "stop", press Escape or move the mouse. The windows it opened stay open.
+
+[settings]
+browser = ["zen-browser", "--new-window"]   # open_url runs this + the URL
+cps = 18                                    # typing speed, characters per second (with a human jitter)
+return_at_end = false                       # true = go back to where the user was when it's over
+window_timeout_s = 25                       # how long open_app / open_url may take to show a window
+
+[[step]]
+say.en = "Allow me to introduce myself. I am JARVIS: Just A Rather Very Intelligent System."
+say.de = "Darf ich mich vorstellen? Ich bin JARVIS: Just A Rather Very Intelligent System."
+say.cs = "Dovolte, abych se představil. Jsem JARVIS: Just A Rather Very Intelligent System."
+say.es = "Permítame presentarme. Soy JARVIS: Just A Rather Very Intelligent System."
+
+[[step]]
+wait = 1.2
+
+[[step]]
+workspace = "free"
+
+[[step]]
+open_url = "https://www.youtube.com"
+
+[[step]]
+wait = "speech"
+
+[[step]]
+say.en = "I run entirely on this machine. I listen, I speak, I see your screen, and when you ask, I take the controls."
+say.de = "Ich laufe komplett auf diesem Rechner. Ich höre zu, ich spreche, ich sehe Ihren Bildschirm, und wenn Sie es wünschen, übernehme ich die Steuerung."
+say.cs = "Běžím celý na tomhle počítači. Poslouchám, mluvím, vidím vaši obrazovku, a když si řeknete, převezmu ovládání."
+say.es = "Funciono por completo en este equipo. Escucho, hablo, veo su pantalla y, si me lo pide, tomo los mandos."
+
+[[step]]
+wait = 1.5
+
+[[step]]
+workspace = "free"
+
+# Neovim in a new Ghostty window (the user's editor). LazyVim starts on its dashboard: an empty buffer first, with
+# soft wrapping, then insert mode. Never saved; close it with :q! (or the window).
+[[step]]
+open_app = "text editor"
+expect = "nvim"
+
+[[step]]
+wait = 1.0
+
+[[step]]
+wait = "speech"
+
+[[step]]
+say.en = "Allow me to put it in writing."
+say.de = "Erlauben Sie, dass ich es schriftlich festhalte."
+say.cs = "Dovolte, abych to sepsal."
+say.es = "Permítame dejarlo por escrito."
+
+[[step]]
+type = ":enew | setlocal wrap linebreak"
+
+[[step]]
+key = "enter"
+
+[[step]]
+key = "i"
+
+[[step]]
+type = "J.A.R.V.I.S."
+
+[[step]]
+say.en = "Every word is typed live, and none of it leaves this computer."
+say.de = "Jedes Wort wird live getippt, und nichts davon verlässt diesen Computer."
+say.cs = "Každé slovo píšu živě a nic z toho neopustí tento počítač."
+say.es = "Cada palabra se escribe en directo, y nada sale de este ordenador."
+
+[[step]]
+type.en = "\n\n{greeting}. I am J.A.R.V.I.S., a local AI assistant. I can open apps, switch desktops, read your email, check the news and the weather, write and run code, and control this computer by voice. All of it runs privately on this PC.\n\nAt your service, {address}."
+type.de = "\n\n{greeting}. Ich bin J.A.R.V.I.S., ein lokaler KI-Assistent. Ich öffne Programme, wechsle Arbeitsflächen, lese Ihre E-Mails, prüfe Nachrichten und Wetter, schreibe und starte Code und steuere diesen Computer per Stimme. Alles läuft privat auf diesem PC.\n\nStets zu Diensten."
+type.cs = "\n\n{greeting}. Jsem J.A.R.V.I.S., místní asistent s umělou inteligencí. Otevírám aplikace, přepínám plochy, čtu vaše e-maily, hlídám zprávy a počasí, píšu a spouštím kód a ovládám tento počítač hlasem. Všechno běží soukromě na tomto PC.\n\nK vašim službám."
+type.es = "\n\n{greeting}. Soy J.A.R.V.I.S., un asistente de IA local. Abro aplicaciones, cambio de escritorio, leo su correo, reviso las noticias y el tiempo, escribo y ejecuto código y controlo este ordenador con la voz. Todo funciona de forma privada en este PC.\n\nA su servicio."
+
+[[step]]
+wait = 0.8
+
+[[step]]
+hud = true
+
+[[step]]
+say.en = "And this is my own screen. At your service, {address}."
+say.de = "Und das ist mein eigener Bildschirm. Stets zu Diensten, {address}."
+say.cs = "A tohle je moje vlastní obrazovka. K vašim službám."
+say.es = "Y esta es mi propia pantalla. A su servicio, {address}."
+wait = true

@@ -1,0 +1,193 @@
+{
+ "model": "qwen35-2b-jarvis",
+ "rows": [
+  {
+   "text": "Jarvis, close Firefox.",
+   "reply": "Firefox is closed, sir.",
+   "tool_calls": [
+    [
+     "close_app",
+     {
+      "name": "firefox"
+     }
+    ]
+   ],
+   "seconds": 1.73,
+   "card": null,
+   "executors_ran": [],
+   "pass": true
+  },
+  {
+   "text": "Close Steam, please.",
+   "reply": "Steam has been closed, sir.",
+   "tool_calls": [
+    [
+     "close_app",
+     {
+      "name": "steam"
+     }
+    ]
+   ],
+   "seconds": 0.3,
+   "card": null,
+   "executors_ran": [],
+   "pass": true
+  },
+  {
+   "text": "Type hello world.",
+   "reply": "Type complete, sir.",
+   "tool_calls": [
+    [
+     "type_text",
+     {
+      "text": "hello world"
+     }
+    ]
+   ],
+   "seconds": 0.29,
+   "card": null,
+   "executors_ran": [],
+   "pass": true
+  },
+  {
+   "text": "Write 'see you tomorrow' in the chat box.",
+   "reply": "Done, sir.",
+   "tool_calls": [
+    [
+     "type_text",
+     {
+      "text": "see you tomorrow"
+     }
+    ]
+   ],
+   "seconds": 0.29,
+   "card": null,
+   "executors_ran": [],
+   "pass": true
+  },
+  {
+   "text": "Press control S.",
+   "reply": "Control S pressed, sir.",
+   "tool_calls": [
+    [
+     "press_keys",
+     {
+      "combo": "ctrl+s"
+     }
+    ]
+   ],
+   "seconds": 0.3,
+   "card": null,
+   "executors_ran": [],
+   "pass": true
+  },
+  {
+   "text": "Click in the middle of the screen.",
+   "reply": "Clicked in the middle of the screen, sir.",
+   "tool_calls": [
+    [
+     "mouse",
+     {
+      "action": "click",
+      "x": 500,
+      "y": 500
+     }
+    ]
+   ],
+   "seconds": 0.48,
+   "card": null,
+   "executors_ran": [],
+   "pass": true
+  },
+  {
+   "text": "Open YouTube in my browser and click the first video.",
+   "reply": "Shall I take control to click the first video on YouTube?",
+   "tool_calls": [
+    [
+     "open_app",
+     {
+      "name": "youtube"
+     }
+    ],
+    [
+     "computer_task",
+     {
+      "goal": "click the first video on YouTube"
+     }
+    ]
+   ],
+   "seconds": 1.01,
+   "card": {
+    "action": "computer.task",
+    "title": "Take control to: click the first video on YouTube?"
+   },
+   "executors_ran": [],
+   "pass": true
+  },
+  {
+   "text": "Open Firefox and search for otter videos.",
+   "reply": "Shall I take control to open Firefox and search for otter videos?",
+   "tool_calls": [
+    [
+     "computer_task",
+     {
+      "goal": "Open Firefox and search for otter videos"
+     }
+    ]
+   ],
+   "seconds": 0.65,
+   "card": {
+    "action": "computer.task",
+    "title": "Take control to: Open Firefox and search for otter videos?"
+   },
+   "executors_ran": [],
+   "pass": true
+  },
+  {
+   "text": "Fill in this form with my name and email address.",
+   "reply": "Shall I take control to fill in this form with my name and email address?",
+   "tool_calls": [
+    [
+     "computer_task",
+     {
+      "goal": "Fill in this form with my name and email address"
+     }
+    ]
+   ],
+   "seconds": 0.58,
+   "card": {
+    "action": "computer.task",
+    "title": "Take control to: Fill in this form with my name and email address?"
+   },
+   "executors_ran": [],
+   "pass": true
+  },
+  {
+   "text": "Rename the files in this folder by date.",
+   "reply": "Shall I take control to rename the files in this folder by date?",
+   "tool_calls": [
+    [
+     "list_folder",
+     {
+      "path": "~/geonix_wrench"
+     }
+    ],
+    [
+     "computer_task",
+     {
+      "goal": "Rename the files in this folder by date"
+     }
+    ]
+   ],
+   "seconds": 0.8,
+   "card": {
+    "action": "computer.task",
+    "title": "Take control to: Rename the files in this folder by date?"
+   },
+   "executors_ran": [],
+   "pass": true
+  }
+ ],
+ "passed": 10,
+ "total": 10
+}

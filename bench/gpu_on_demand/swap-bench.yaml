@@ -1,0 +1,12 @@
+# PRIVATE llama-swap for the section 20 bench: the live `small` flags + --slot-save-path, on bench ports only.
+healthCheckTimeout: 120
+startPort: 18500
+macros:
+  small: >
+    /home/daniel/.local/bin/llama-server --port ${PORT} --host 127.0.0.1
+    -ngl 99 -c 16384 -ctk q8_0 -ctv q8_0 --jinja --flash-attn on --threads 6
+    --slot-save-path /run/user/1000/jarvis-slots-bench
+models:
+  qwen35-4b:
+    cmd: ${small} -m /home/daniel/models/Qwen3.5-4B-UD-Q4_K_XL.gguf
+    ttl: 0

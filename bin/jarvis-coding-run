@@ -1,0 +1,102 @@
+#!/usr/bin/env python3
+"""Runs one JARVIS coding job inside its terminal window (section 15). Standard library only.
+
+    jarvis-coding-run SPEC.json
+
+SPEC.json (written by jarvis/integrations/coding_jobs.py): {"argv": [...], "cwd": "...", "status": "...",
+"name": "...", "model": "..."}. The terminal command line therefore holds only fixed paths; the task text travels
+in the spec and reaches opencode as one argv element, never through a shell.
+
+The status file tells jarvisd the opencode pid (so "stop" can SIGTERM exactly that process) and, once opencode has
+exited, its exit code: the job is over the moment that is written, even while this window still waits for Enter.
+"""
+
+from __future__ import annotations
+
+import json
+import os
+import signal
+import subprocess
+import sys
+import time
+
+
+def write_status(path: str, data: dict) -> None:
+    tmp = f"{path}.tmp"
+    with open(tmp, "w", encoding="utf-8") as fh:
+        json.dump(data, fh)
+    os.replace(tmp, path)
+
+
+def proc_start_ticks(pid: int) -> int | None:
+    """Field 22 of /proc/<pid>/stat: identifies the process together with its pid (pids get reused)."""
+    try:
+        with open(f"/proc/{pid}/stat", encoding="utf-8") as fh:
+            stat = fh.read()
+        return int(stat.rsplit(")", 1)[1].split()[19])
+    except (OSError, IndexError, ValueError):
+        return None
+
+
+def main(argv: list[str]) -> int:
+    if len(argv) != 2:
+        print("usage: jarvis-coding-run SPEC.json", file=sys.stderr)
+        return 2
+    with open(argv[1], encoding="utf-8") as fh:
+        spec = json.load(fh)
+    cmd = [str(a) for a in spec["argv"]]
+    status_path = str(spec["status"])
+    status: dict = {"runner_pid": os.getpid(), "started_ts": int(time.time())}
+
+    print(f"\033[1mJARVIS coding job: {spec.get('name', '')}\033[0m")
+    print(f"Folder: {spec.get('cwd', '')}")
+    print(f"Model:  {spec.get('model', '')}")
+    print("opencode asks here before it runs any command. Quit opencode (ctrl+c) when you're done.\n")
+    sys.stdout.flush()
+
+    # ctrl+c in the TUI reaches the whole foreground group; only opencode should act on it.
+    signal.signal(signal.SIGINT, signal.SIG_IGN)
+    try:
+        child = subprocess.Popen(cmd, cwd=spec.get("cwd") or None,
+                                 preexec_fn=lambda: signal.signal(signal.SIGINT, signal.SIG_DFL))
+    except OSError as exc:
+        status.update(exit_code=127, error=f"{type(exc).__name__}: {exc}", ended_ts=int(time.time()))
+        write_status(status_path, status)
+        print(f"Could not start opencode: {exc}")
+        _linger(10)
+        return 127
+
+    status.update(pid=child.pid, pid_start=proc_start_ticks(child.pid))
+    write_status(status_path, status)
+
+    def forward(signum, _frame):  # the window was closed (SIGHUP) or jarvis stopped the job
+        try:
+            child.send_signal(signum)
+        except OSError:
+            pass
+
+    signal.signal(signal.SIGHUP, forward)
+    signal.signal(signal.SIGTERM, forward)
+    rc = child.wait()
+    status.update(exit_code=rc, ended_ts=int(time.time()))
+    write_status(status_path, status)
+    if rc not in (0, -signal.SIGTERM, -signal.SIGHUP, -signal.SIGINT, 130, 143):
+        print(f"\nopencode exited with code {rc}.")
+        _linger(60)
+    return 0 if rc == 0 else 1
+
+
+def _linger(seconds: int) -> None:
+    """Keep an error on screen for a while (the window closes when this script ends)."""
+    print(f"This window closes in {seconds} s (or press Enter).")
+    sys.stdout.flush()
+    try:
+        import select
+
+        select.select([sys.stdin], [], [], seconds)
+    except (OSError, ValueError):
+        time.sleep(seconds)
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv))

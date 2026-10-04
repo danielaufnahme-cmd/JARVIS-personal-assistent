@@ -1,0 +1,121 @@
+# livekit-wakeword config for the single-word "Jarvis" model (build section 6).
+# Run through wakeword/train/pipeline.py, not the bare CLI: the pipeline patches in the
+# near-miss weighting, the "no negative may contain 'jarvis'" filter, and the Czech /
+# British-accented clips (see pipeline.py for why).
+
+model_name: jarvis
+
+# "jarvis" is listed twice so two thirds of the positives are the bare word.
+target_phrases: ["jarvis", "hey jarvis", "jarvis"]
+
+n_samples: 30000            # en-us positives and adversarial negatives (per class)
+n_samples_val: 4000
+n_background_samples: 2000
+n_background_samples_val: 500
+
+# 8 keeps the VITS generator at ~0.6 GB VRAM; the GPU is shared with llama-server and Whisper.
+tts_batch_size: 8
+
+# Hand-picked near-misses. pipeline.py repeats these so they make up ~40 % of the negatives;
+# the rest are CMUdict phoneme neighbours of "jarvis" (max 3 substitutions).
+custom_negative_phrases:
+  - "service"
+  - "nervous"
+  - "Travis"
+  - "Harvey"
+  - "car keys"
+  - "jars"
+  - "jar"
+  - "garbage"
+  - "jar of"
+  - "a jar of jam"
+  - "office"
+  - "harvest"
+  - "Marvin"
+  - "Mavis"
+  - "Davis"
+  - "Elvis"
+  - "Garvey"
+  - "Harvard"
+  - "Java"
+  - "Charles"
+  - "carvings"
+  - "starve us"
+  - "novice"
+  - "nervy"
+  - "hey Travis"
+  - "hey Harvey"
+  - "hey Siri"
+  - "hey Alexa"
+  - "okay Google"
+  - "hey Mycroft"
+  - "hey"
+  - "hey there"
+  - "hey guys"
+  - "jazz"
+  - "jarring"
+  - "Jasper"
+  - "Jarred"
+  - "Travis called"
+  - "where are my car keys"
+  - "call the service center"
+  - "I'm a bit nervous"
+  - "Harvey is here"
+  - "take out the garbage"
+  - "I'm at the office"
+  - "put it in the jar"
+  - "the car is ours"
+  - "our service"
+  - "there's a verse"
+  - "far worse"
+  - "jury service"
+  - "car service"
+  - "nervous system"
+  - "harvest moon"
+  - "Travis Scott"
+  - "starvation"
+  - "arvo"
+  - "jar lid"
+  - "jargon"
+  - "charming"
+  - "Carlos"
+  - "Marcus"
+  - "Jarrah"
+  - "chores"
+  - "just"
+  - "yes"
+  - "thanks"
+  - "stop"
+  - "hello"
+
+noise_scales: [0.667, 0.98]
+noise_scale_ws: [0.8, 0.98]
+length_scales: [0.75, 0.9, 1.0, 1.15, 1.3]
+slerp_weights: [0.2, 0.35, 0.5, 0.65, 0.8]
+
+data_dir: /home/daniel/jarvis/wakeword/data/lk
+output_dir: /home/daniel/jarvis/wakeword/data/lk/output
+
+augmentation:
+  clip_duration: 2.0
+  batch_size: 16
+  rounds: 2
+  background_paths: [/home/daniel/jarvis/wakeword/data/lk/backgrounds]
+  rir_paths: [/home/daniel/jarvis/wakeword/data/lk/rirs]
+
+model:
+  model_type: conv_attention
+  model_size: medium
+
+steps: 60000
+learning_rate: 0.0001
+weight_decay: 0.01
+label_smoothing: 0.05
+max_negative_weight: 3000
+target_fp_per_hour: 0.2
+
+batch_n_per_class:
+  positive: 64
+  adversarial_negative: 96
+  ACAV100M_sample: 1024
+  background_noise: 32

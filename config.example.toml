@@ -1,0 +1,401 @@
+# Copy to ~/.config/jarvis/config.toml and edit. Missing keys fall back to these defaults.
+
+[persona]
+address = "sir"                # how JARVIS addresses the user
+timezone = "Europe/Prague"
+
+[llm]
+base_url = "http://127.0.0.1:8401/v1"   # llama-swap (never 3000/8085/8086/8090/8099/11434)
+model = "jarvis"
+idle_unload_s = 600            # (llama-swap's ttl is only a safety net now; see fast_/deep_idle_unload_s)
+history_turns = 12
+voice_max_tokens = 300
+voice_temperature = 0.7
+deep_max_tokens = 4000
+deep_temperature = 0.6
+backend = "auto"               # "llama-swap" | "ollama" | "auto" (port 11434 means ollama)
+thinking_knob = "auto"         # "chat_template_kwargs" (llama-server) | "reasoning_effort" (ollama) | "auto"
+request_timeout_s = 300        # a cold load of the 35B model can take a while
+# Section 12 (docs/tuning.md "Fast voice model"): a small model is the voice brain, the 35B above (`model`) does
+# deep_think and takes over a turn the small model gets wrong. Both can be loaded at once (llama-swap matrix).
+fast_model = "qwen35-4b"       # llama-swap model id of the voice model; "" = none (all turns on `model`)
+fast_temperature = 0.2         # its voice temperature: at 0.7 the small models skipped tool calls far more often
+voice_brain = "fast"           # "fast" | "smart" (all voice turns on `model`). The pill menu overrides this
+                               # at runtime (llm.brain.set, saved in ~/.local/state/jarvis/state.json)
+fallback = true                # retry a turn once on `model` if the fast model calls an unknown tool, sends
+                               # broken JSON arguments, or claims a draft it never made
+# Section 20 (docs/tuning.md "Voice model on the GPU only while talking"): where the fast model lives.
+#   "on_demand": 0 VRAM while idle, weights hot in the RAM page cache. A wake trigger (before the Whisper check),
+#                a pill click, SUPER+J / the HUD start the load (1.3 s, while the user is still talking); it leaves
+#                the GPU fast_idle_unload_s after the session went idle (never mid-turn, mid-speech or during a
+#                computer_task). "Go to sleep" / "Unload now" unload it too.
+#   "resident":  section 12's behaviour: always loaded, reloaded if llama-swap restarts.
+# The pill menu ("Voice model: GPU only when talking / always on GPU") overrides this at runtime
+# (llm.fast.gpu_mode, saved in ~/.local/state/jarvis/state.json).
+fast_gpu_mode = "on_demand"
+fast_idle_unload_s = 60        # on_demand only (<= 0 means 60)
+fast_models = ["qwen35-4b", "qwen35-2b"]   # the pill menu's "Fast model" choices; the choice persists
+# The 35B is loaded on demand (deep_think, a fallback) and unloaded this long after its last request (as the voice
+# brain: after the session).
+deep_idle_unload_s = 60
+# on_demand: each load restores the saved KV of the fixed prompt prefix (system prompt + tool schemas, ~8.3k
+# tokens; 30 ms) instead of prefilling it (3.8 s). slot_dir must be llama-server's --slot-save-path (the `small`
+# macro in ~/.config/llama-swap/config.yaml); files are ~190 MB each, the newest two per model are kept.
+slot_restore = true
+slot_dir = "$XDG_RUNTIME_DIR/jarvis-slots"
+llama_swap_config = "~/.config/llama-swap/config.yaml"   # where "auto" below finds the fast model's GGUF
+# GGUFs kept in the page cache (re-read with posix_fadvise WILLNEED when the kernel has dropped part of them,
+# e.g. while a game needs the RAM). "auto" = the active fast model's file (follows the pill menu's choice). No
+# mlock: RLIMIT_MEMLOCK is 8 MiB and raising it needs root. The 35B (17.7 GB) is left out on purpose.
+# jarvis-pin.service (jarvis/pin.py) holds the same file(s) mapped and touched every 15 s in on_demand mode, which
+# survives a 35B load; this re-read is the fallback without it.
+keep_in_page_cache = ["auto"]
+page_cache_refresh_s = 60
+
+[session]
+silence_timeout_s = 120        # a click-started session closes after this much silence before its first question
+confirm_window_s = 8           # mic stays open this long after "Shall I send it?"
+followup_s = 8                 # after JARVIS speaks, a follow-up without "Jarvis" must start within this; then
+                               # only the wake word or a click opens a turn
+context_keep_s = 300           # a new session keeps the conversation if the last one ended less than this ago
+
+[ipc]
+socket = ""                    # empty = $XDG_RUNTIME_DIR/jarvis.sock
+
+[daemon]
+log_level = "INFO"             # DEBUG / INFO / WARNING; jarvisd logs to stderr (journald)
+
+[wake]
+enabled = true
+# One model or several with their own thresholds. The trained single-word "jarvis" (section 6, wakeword/jarvis.yaml:
+# 92 % on a bare "Jarvis", 3.7 false triggers/h, all checked by Whisper) plus the bundled hey_jarvis (99 % on
+# "Hey Jarvis"). Either one firing counts. Names: bundled openWakeWord names, wakeword/<name>.onnx, or paths.
+model = "jarvis:0.06, hey_jarvis:0.5"
+threshold = 0.5                # for any model listed without its own threshold
+refractory_s = 2.0             # ignore further detections for this long
+log_min_score = 0.03           # scores above this are logged at DEBUG (set [daemon] log_level = "DEBUG")
+verify = true                  # 2nd stage: Whisper must hear "Jarvis" (videos can trigger openWakeWord)
+verify_min_ratio = 82          # fuzzy word match vs "jarvis": jervis 83 ok; jars 80, Travis 67, service 46 rejected
+verify_skip_score = 0.95       # no Whisper check at/above this score, only while no other app is playing
+verify_preroll_s = 2.5         # audio before the trigger that Whisper checks ...
+verify_post_ms = 300           # ... plus this much after it
+verify_prompt = "Jarvis."
+barge_threshold_scale = 0.75   # while JARVIS speaks: stage-1 thresholds x0.75 (a false trigger only stops him);
+                               # the check then uses the GPU turbo Whisper if it is on the GPU (docs/tuning.md)
+# The check runs on its own small Whisper on the CPU (no VRAM while JARVIS waits for its name). "" = use [stt].
+verify_model = "base"
+verify_device = "cpu"
+verify_compute_type = "int8"
+verify_cpu_threads = 4
+verify_min_score = -1.0        # decoder confidence floor: base + "Jarvis." accepts 93.5 % of real "Jarvis"es and 0/100
+                               # windows of real dialogue (turbo: 93.0 %, 6/100); docs/tuning.md "Wake check on the CPU"
+
+[audio]
+voice_enabled = true           # false = no mic / wake word / TTS; typed and IPC input still work
+echo_cancel = true             # load PipeWire module-echo-cancel at runtime (jarvis_ec_source / jarvis_ec_sink)
+mic = "alsa_input.usb-MUSIC-BOOST_Trust_GXT_242_Microphone-00.mono-fallback"
+speaker = ""                   # empty = the current default sink
+ec_method = "webrtc"
+ec_args = "webrtc.noise_suppression=false webrtc.gain_control=false webrtc.high_pass_filter=true"  # NS/AGC confuse the VAD
+level_hz = 30.0
+volume_include_virtual_sinks = true   # count EasyEffects' sink too when JARVIS's output ends up on it
+filler_after_s = 2.5           # no answer this long after the question: "One moment, sir." (0 = off)
+duck_enabled = true            # lower other apps while JARVIS is active (the pill menu toggles it; persisted)
+duck_level = 0.2               # multiplies each other stream's linear volume (0.2 ≈ -14 dB); sink volumes untouched
+duck_fade_in_ms = 250
+restore_fade_ms = 600
+duck_restore_grace_s = 1.0     # other apps come back this long after JARVIS stops speaking
+duck_idle_restore_s = 8.0      # ... or this long after a wake/click when nothing is said
+vad_threshold = 0.5
+vad_silence_ms = 700           # end the turn after this much silence
+vad_max_turn_s = 30.0
+
+[stt]
+model = "large-v3-turbo"
+device = "cuda"
+compute_type = "int8_float16"
+beam_size = 1
+languages = ["en", "de", "cs", "es"]  # auto-detection among these, in preference order (close calls go to the
+                               # earlier one); JARVIS answers in the language heard, else English
+min_free_vram_mb = 1800        # load Whisper on the CPU if the GPU has less free than this
+cpu_threads = 8                # when on the CPU
+on_demand = true               # GPU Whisper leaves the GPU when idle; a wake trigger / click loads it again
+park_in_ram = false            # false: unloaded when idle (1.3 s reload from the page cache, overlaps the question);
+                               # true: parked in RAM (~0.8 GB more RSS, 0.05 s move)
+idle_unload_s = 60             # ... and it goes back to RAM this long after the session goes idle
+
+[tts]
+voice = "bm_george"            # bm_george | bm_lewis | bm_fable; samples in docs/voice-samples/
+speed = 1.0
+lang = "en-gb"
+model_dir = "~/models/kokoro"  # kokoro-v1.0.onnx + voices-v1.0.bin
+piper_dir = "~/models/piper"   # Piper voices for the languages Kokoro can't speak (docs/voice.md)
+
+[tts.voices]                   # JARVIS answers in the language he heard; one voice per language
+en = "kokoro:bm_george"
+es = "kokoro:em_alex"
+de = "piper:de_DE-thorsten-high"
+cs = "piper:cs_CZ-jirka-medium"
+
+[email]
+# Gmail. The login credentials live in the system keyring (service "jarvis-gmail"), never in this file:
+# run `jarvisctl setup email`.
+enabled = true
+imap_host = "imap.gmail.com"
+imap_port = 993                # SSL
+smtp_host = "smtp.gmail.com"
+smtp_port = 587                # STARTTLS
+primary_only = true            # only the Primary inbox category
+cache_size = 50                # newest INBOX headers cached for the HUD
+idle_renew_s = 240             # re-IDLE (and re-sync) every 4 min: a safety net if a push is lost
+
+[contacts]
+default_region = "CZ"          # phone numbers without a country code are read as this region
+
+[news]
+# Headlines from RSS/Atom feeds (section 11), for get_news and the HUD's Headlines panel. Read-only.
+enabled = true
+ttl_s = 900                    # a feed is fetched again after 15 min (cached in memory and cache.db)
+refresh_s = 900                # the HUD headlines refresh this often
+timeout_s = 8.0
+max_feed_bytes = 5000000
+widget_items = 8               # headlines in the widgets event, mixed across categories
+user_agent = "Mozilla/5.0 (X11; Linux x86_64) JARVIS/0.1 (personal voice assistant; RSS reader)"
+# category: world | czech | tech | business | science. A [[news.feeds]] list in your own config replaces this one.
+# Every URL below was checked live on 2026-09-25.
+[[news.feeds]]
+name = "BBC News"
+url = "https://feeds.bbci.co.uk/news/world/rss.xml"
+category = "world"
+language = "en"
+[[news.feeds]]
+name = "The Guardian"
+url = "https://www.theguardian.com/world/rss"
+category = "world"
+language = "en"
+[[news.feeds]]
+name = "ČT24"
+url = "https://ct24.ceskatelevize.cz/rss"
+category = "czech"
+language = "cs"
+[[news.feeds]]
+name = "iROZHLAS"
+url = "https://www.irozhlas.cz/rss/irozhlas"
+category = "czech"
+language = "cs"
+[[news.feeds]]
+name = "Seznam Zprávy"
+url = "https://www.seznamzpravy.cz/rss"
+category = "czech"
+language = "cs"
+[[news.feeds]]
+name = "Hacker News"
+url = "https://news.ycombinator.com/rss"
+category = "tech"
+language = "en"
+[[news.feeds]]
+name = "The Verge"
+url = "https://www.theverge.com/rss/index.xml"
+category = "tech"
+language = "en"
+[[news.feeds]]
+name = "Ars Technica"
+url = "https://feeds.arstechnica.com/arstechnica/index"
+category = "tech"
+language = "en"
+[[news.feeds]]
+name = "BBC Business"
+url = "https://feeds.bbci.co.uk/news/business/rss.xml"
+category = "business"
+language = "en"
+[[news.feeds]]
+name = "BBC Science"
+url = "https://feeds.bbci.co.uk/news/science_and_environment/rss.xml"
+category = "science"
+language = "en"
+
+[web]
+# Web search and page reading (section 11). Read-only: nothing is ever posted anywhere.
+enabled = true
+backend = "ddgs"               # "ddgs" (the ddgs package: DuckDuckGo & co., no API key) | "searxng"
+searxng_url = ""               # for backend = "searxng", e.g. "http://127.0.0.1:8888" (not 3000/8085/8086/8090/8099)
+ddgs_backend = "auto"          # the ddgs package's engine choice for text search ("auto", "duckduckgo", "bing", ...)
+ddgs_news_backend = "yahoo"    # for recent=true (news); falls back to "auto". ddgs misdated Bing news items (2026-09-25)
+region = "wt-wt"               # no region; e.g. "cz-cs" or "uk-en"
+safesearch = "moderate"
+min_interval_s = 2.0           # at least 2 s between two searches
+timeout_s = 10.0
+page_max_bytes = 3000000       # read_webpage never downloads more than 3 MB
+page_max_chars = 6000          # the extracted article is trimmed to about this length
+user_agent = "Mozilla/5.0 (X11; Linux x86_64; rv:140.0) Gecko/20100101 Firefox/140.0"
+
+[weather]
+# Open-Meteo (no API key). The location follows Noctalia's auto-location file; city/lat/lon are the fallback.
+enabled = true
+location_file = "~/.cache/noctalia/location.json"   # "" = always use city/lat/lon below
+city = "Prague"
+lat = 50.0755
+lon = 14.4378
+ttl_s = 900                    # fetched again after 15 min (or at once when the location changes)
+timeout_s = 8.0
+url = "https://api.open-meteo.com/v1/forecast"
+
+[reminders]
+# Reminders and timers live in cache.db and survive restarts. Times are in [persona] timezone.
+startup_grace_s = 20.0         # ones missed while jarvisd was down fire once the voice is up (at most this late)
+keep_done_days = 7
+
+[calendar]
+# Optional, read-only: Google Calendar → Settings → your calendar → "Secret address in iCal format".
+# Empty = no calendar; the HUD's Today panel then shows reminders and timers only.
+ics_url = ""
+refresh_s = 600                # polled every 10 min
+timeout_s = 10.0
+max_bytes = 5000000
+
+[system]
+poll_s = 1.0                   # CPU/RAM/VRAM/GPU/disk, polled ONLY while the HUD is open
+disk_path = "/"
+model_processes = ["llama-server"]   # their RSS is shown as the model's RAM
+
+[manners]
+# Section 13: conversation manners.
+barge_in = true                # "Jarvis" while he speaks silences him at once (before Whisper verifies it)
+barge_fade_ms = 40
+barge_ignore_ms = 300          # ignore triggers in the first 300 ms of each spoken chunk (echo onset)
+stop_words = true              # "stop" / "enough" / "quiet" / "wait" / "přestaň" / "počkej" … while he speaks
+stop_min_speech_ms = 400
+stop_max_speech_s = 3.0
+mic_busy = true                # stop listening while another app records the mic (hyprvoice dictation, calls)
+mic_busy_resume_s = 1.0        # listen again 1 s after it stopped
+mic_busy_poll_s = 3.0
+mic_busy_sources = []          # extra sources that count as the mic
+mic_busy_ignore = ["noctalia", "peak detect", "pavucontrol", "pwvucontrol", "cava", "easyeffects"]
+addressed_check = true         # only answer turns meant for JARVIS (rules + a fast-model check)
+addressed_budget_ms = 300
+addressed_fail_open = true     # the check didn't answer in time: keep a normal-length turn
+wake_max_words_before = 3      # "… four words Jarvis …" mid-sentence = talking about him
+long_speech_s = 15.0           # a turn this long without "Jarvis" at its start is treated as dictation ...
+long_speech_min_confidence = 0.85   # ... unless the check is at least this sure it's for JARVIS
+require_name = true            # react ONLY when called by name, also inside a session ("Jarvis, …", "…, Jarvis?");
+                               # exceptions: the turn right after the wake word, the first question after a click,
+                               # yes/no in the confirm window, stop words while he speaks. No LLM classifier then.
+barge_listen_s = 6.0           # after any barge-in trigger he stays stopped and listens this long (name needed)
+
+[desktop]
+# Section 14: open apps (XDG desktop entries only), URLs, folders, media, workspaces, screenshots, lock.
+enabled = true
+launcher = "auto"              # auto = `uwsm app -- <id>.desktop` if uwsm is installed, else gtk-launch
+screenshot_dir = "~/Pictures/Screenshots"
+lock_command = "~/.config/hypr/Scripts/lock.sh"   # what SUPER+L runs; falls back to hyprlock
+terminal = ["ghostty", "--gtk-single-instance=false"]  # Terminal=true apps (nvim, btop) open inside this
+[desktop.app_aliases]          # spoken name -> desktop id, for names the fuzzy match gets wrong
+# music = "io.github.quodlibet.QuodLibet"
+"text editor" = "nvim"         # the user's editor is Neovim (2026-09-28), in a Ghostty window
+"code editor" = "nvim"
+"editor" = "nvim"
+"notepad" = "nvim"
+"neovim" = "nvim"
+"vim" = "nvim"
+
+[files]
+# Section 14: create_file / append_to_file / read_file / list_folder. New files in these roots are created
+# directly; overwrites and anything outside them need the user's confirmation. Dotfiles, ~/.config, ~/.ssh,
+# ~/.local and anything outside $HOME are always refused.
+default_folder = "~/Documents/JARVIS"
+roots = ["~/Documents", "~/Desktop", "~/Downloads", "~/Projects", "~/Pictures", "~/Music", "~/Videos"]
+max_bytes = 1000000
+read_max_bytes = 200000
+
+[coding]
+# Section 15: "code me a project" runs opencode in a ghostty window on a heavier Ollama model (the voice stays on
+# the small model). A confirm card comes first; ~/Projects/<name> must be new or empty.
+enabled = true
+model = "qwen3.8:27b-mtp-q4_K_M"   # Ollama tag; qwen3.6:27b-coding-mtp-q4_K_M is the other candidate
+num_ctx = 32768                    # Ollama's default here is 4096 (too small for opencode): a derived model
+                                   # jarvis-coder:<model>-32k with this context is created on first use (0 = off)
+ollama_url = "http://127.0.0.1:11434"
+projects_dir = "~/Projects"
+opencode_bin = ""                  # "" = find it
+terminal = ["ghostty", "--gtk-single-instance=false"]
+app_launcher = "auto"              # uwsm app (own scope, survives a jarvisd restart), else systemd-run --scope
+min_free_vram_gb = 6.0             # a fullscreen game or less free VRAM than this: the card warns first
+game_classes = ["steam_app_", "gamescope", ".exe", "lutris", "heroic", "wine", "proton", "retroarch", "minecraft"]
+unload_smart_model = true          # unload the 35B through llama-swap first (the voice model and STT stay)
+warm_up = true                     # load the model and measure tok/s before the terminal opens
+keep_alive_after = "5m"            # Ollama keeps the model this long after the job ends
+max_task_chars = 4000
+
+[commands]
+# Section 17: "run htop" / "start the training". Every command is a confirm card first (button: Run), then runs in a
+# ghostty window the user watches (bash -lc, in the workdir). sudo/su/doas/pkexec/run0, rm -rf of ~ or /, mkfs,
+# dd to a device, fork bombs, curl|sh, writes into ~/.ssh ~/.gnupg /etc and non --user systemctl are always refused.
+enabled = true
+default_workdir = "~"              # an existing folder inside $HOME
+terminal = ["ghostty", "--gtk-single-instance=false"]
+app_launcher = "auto"              # uwsm app (own scope, survives jarvisd stopping), else systemd-run --scope
+max_chars = 2000
+training_unit = "jarvis-finetune"
+training_script = "~/jarvis/finetune/start.sh"   # section 16: starts the unit with memory/CPU limits; stops jarvisd while it trains
+training_status_file = "~/jarvis/finetune/STATUS"
+training_hours = "12–13"
+training_start_delay_s = 8.0       # "Starting the training…" is spoken first, then the terminal opens
+update_check_timeout_s = 120.0     # system_update_check: checkupdates (pacman-contrib), read-only
+
+[firm]
+# Section 18: Geonix Wrench's numbers (monthly earnings, total earned, subscribers, job cards/PDFs, signups) from
+# the backend's read-only GET /api/summary behind Cloudflare Access. The URL and the service token live in the
+# keyring (service jarvis-firm-geonix): run `jarvisctl setup firm geonix`. Until then the firm is "not connected".
+enabled = true
+provider = "geonix"
+refresh_s = 900                    # every 15 min while jarvisd runs (at most one request a minute)
+timeout_s = 10.0
+stale_after_s = 1800               # older numbers are marked stale (a failed refresh keeps the last good ones)
+
+[briefing]
+# Section 18: the first wake word or click of the day (in [persona] timezone) gives a two-sentence briefing
+# instead of "Yes, sir?": the firm's numbers, today's reminders and events, the weather. Nothing while muted.
+# The pill's right-click menu ("Daily briefing") overrides this and remembers the choice (state.json).
+enabled = true
+
+[showcase]
+# Section 24: "Jarvis, present yourself" / "who are you" / "show me what you can do" (also de/cs/es) runs a scripted
+# demonstration: JARVIS speaks while it opens YouTube in a new Zen window and Writer on empty workspaces and types a
+# text. No model involved. Edit the script (spoken lines, steps, text, languages) in ~/.config/jarvis/showcase.toml;
+# check it with `uv run python -m jarvis.integrations.showcase check`. Stop it: "stop", Escape or move the mouse.
+enabled = true
+script = ""                    # "" = ~/.config/jarvis/showcase.toml (copied from jarvis/showcase.default.toml on first use)
+mute = false                   # true: nothing is spoken (the steps still run)
+
+[computer]                     # section 19: type_text / press_keys / mouse, and computer_task (screenshot → 35B vision → mouse/keyboard)
+enabled = true
+confirm = false                # section 21: computer_task starts at once ("Taking control, sir."); true brings back the "Take control?" card
+max_steps = 40                 # one screenshot + one action per step
+max_seconds = 300
+image_width = 1280             # screenshots are downscaled in memory; never written to disk unless debug_screenshots
+jpeg_quality = 80
+settle_s = 0.7                 # wait after an action before the next screenshot
+step_timeout_s = 90            # one vision call (the first one may load the 35B)
+takeover_mouse_px = 25         # moving the real mouse this much (evdev units, 0.5 s) stops the task
+debug_screenshots = false      # true: keep each step's screenshot in ~/.local/state/jarvis/computer/
+# Section 23: faster steps (numbers in docs/tuning.md). The step model runs every step fully on the GPU: the 4B with
+# its vision projector (llama-swap `qwen35-4b-vision`, ~4.4 GB, loaded when a task starts, unloaded a minute after).
+# The section 19 loop (the 35B for every step, ~5-25 s a step): step_model = "jarvis", prompt = "full",
+# max_actions = 1, settle = "fixed", verify_done = false, zoom_retry = false.
+step_model = "qwen35-4b-vision"
+escalate_model = ""            # e.g. "jarvis": the 35B takes a step over when stuck (measured: no gain, much slower)
+prompt = "fast_note"           # "fast_note": short prompt + a 12-word screen note; "fast": no note; "full": section 19's
+max_actions = 4                # actions one reply may carry for one screenshot (the batch stops if the window changes)
+step_max_tokens = 200
+step_temperature = 0.0
+verify_done = true             # the step model checks its own "done" once more before it is believed
+zoom_retry = true              # a click that changed nothing is re-aimed on a 4x zoomed crop around it
+history_steps = 6              # earlier steps sent as text (never old screenshots)
+settle = "adaptive"            # wait until the screen stops changing (grim every ~0.1 s), at most settle_max_s; "fixed" = settle_s
+settle_max_s = 1.5
+escalate_after = 2             # steps without a visible change before escalate_model looks
+give_up_after = 4              # steps in a row without a visible change end the task ("I'm stuck"); 0 = off
+vram_need_mb = 5500            # free VRAM the 35B needs before it loads for vision (else the voice model leaves the GPU)
+step_vram_need_mb = 5000       # the same for a small step model
+direct = true                  # "open X", "search the web for Y", "open YouTube and ..." start with open_app / open_url
+search_url = "https://duckduckgo.com/?q={q}"   # Zen's search engine

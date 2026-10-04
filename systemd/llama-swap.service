@@ -1,0 +1,15 @@
+[Unit]
+Description=llama-swap model proxy for JARVIS (starts llama-server on demand, unloads after ttl)
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=%h/.local/bin/llama-swap -config %h/.config/llama-swap/config.yaml -listen 127.0.0.1:8401 -watch-config
+Restart=on-failure
+RestartSec=3
+# llama-server is a child process; stop it together with the proxy
+KillMode=control-group
+TimeoutStopSec=30
+
+[Install]
+WantedBy=default.target

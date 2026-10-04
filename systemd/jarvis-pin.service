@@ -1,0 +1,17 @@
+[Unit]
+Description=JARVIS: keep the voice model's GGUF hot in RAM (section 20, jarvis/pin.py)
+# The voice model leaves the GPU when idle; this keeps its weights mapped and recently touched so a wake reloads it
+# from RAM (1.3 s) rather than from disk. No mlock (RLIMIT_MEMLOCK is 8 MiB); the pages stay reclaimable.
+
+[Service]
+Type=simple
+ExecStart=%h/.local/bin/uv run --project %h/jarvis python -m jarvis.pin
+WorkingDirectory=%h/jarvis
+Environment=PYTHONUNBUFFERED=1
+Nice=19
+IOSchedulingClass=idle
+Restart=on-failure
+RestartSec=10
+
+[Install]
+WantedBy=default.target

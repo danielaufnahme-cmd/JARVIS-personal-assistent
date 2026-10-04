@@ -1,0 +1,199 @@
+{
+ "started": "2026-09-28 16:32:02",
+ "tools": [
+  "append_to_file",
+  "cancel_reminder",
+  "close_app",
+  "close_hud",
+  "coding_status",
+  "computer_task",
+  "copy_to_clipboard",
+  "create_file",
+  "deep_think",
+  "draft_email",
+  "find_path",
+  "firm_metric",
+  "firm_summary",
+  "focus_app",
+  "get_calendar",
+  "get_email",
+  "get_news",
+  "get_time",
+  "get_weather",
+  "go_to_sleep",
+  "list_folder",
+  "list_reminders",
+  "list_windows",
+  "lock_screen",
+  "look_at_screen",
+  "mark_read",
+  "media",
+  "mouse",
+  "open_app",
+  "open_hud",
+  "open_path",
+  "open_url",
+  "open_with",
+  "press_keys",
+  "read_clipboard",
+  "read_emails",
+  "read_file",
+  "read_webpage",
+  "revise_draft",
+  "run_command",
+  "screenshot",
+  "search_contacts",
+  "set_reminder",
+  "set_timer",
+  "showcase",
+  "start_coding_project",
+  "start_training",
+  "stop_coding_project",
+  "stop_training",
+  "switch_workspace",
+  "system_status",
+  "system_update_check",
+  "training_status",
+  "type_text",
+  "web_search"
+ ],
+ "n_tools": 55,
+ "cases": 13,
+ "runs": 1,
+ "prompt_mtime": "Mon Sep 28 16:23:11 2026",
+ "registry_mtime": "Sun Sep 27 21:52:00 2026",
+ "fast_temperature": 0.2,
+ "voice_max_tokens": 300,
+ "fallback": true,
+ "servers": {
+  "qwen35-2b-jarvis": {
+   "load_s": 1.31,
+   "first_prime_s": 2.12,
+   "cached_prime_s": 0.04,
+   "vram_mb": 1592,
+   "vram_mb_end": 1594
+  },
+  "qwen35-4b": {
+   "load_s": 0.96,
+   "first_prime_s": 4.87,
+   "cached_prime_s": 0.07,
+   "vram_mb": 3522,
+   "vram_mb_end": 3524
+  }
+ },
+ "gpu": [
+  {
+   "t": "16:32:15",
+   "util": 78,
+   "used_mb": 6160,
+   "swap": [],
+   "forced": null
+  },
+  {
+   "t": "16:32:18",
+   "util": 99,
+   "used_mb": 6162,
+   "swap": [],
+   "forced": null
+  },
+  {
+   "t": "16:32:20",
+   "util": 73,
+   "used_mb": 6162,
+   "swap": [],
+   "forced": null
+  },
+  {
+   "t": "16:32:23",
+   "util": 99,
+   "used_mb": 6162,
+   "swap": [],
+   "forced": null
+  },
+  {
+   "t": "16:32:26",
+   "util": 88,
+   "used_mb": 6162,
+   "swap": [],
+   "forced": null
+  },
+  {
+   "t": "16:32:29",
+   "util": 99,
+   "used_mb": 6162,
+   "swap": [],
+   "forced": null
+  },
+  {
+   "t": "16:32:31",
+   "util": 98,
+   "used_mb": 6162,
+   "swap": [],
+   "forced": null
+  },
+  {
+   "t": "16:32:34",
+   "util": 99,
+   "used_mb": 6162,
+   "swap": [],
+   "forced": null
+  },
+  {
+   "t": "16:32:37",
+   "util": 73,
+   "used_mb": 6162,
+   "swap": [],
+   "forced": null
+  },
+  {
+   "t": "16:32:40",
+   "util": 62,
+   "used_mb": 6162,
+   "swap": [],
+   "forced": null
+  },
+  {
+   "t": "16:32:44",
+   "util": 98,
+   "used_mb": 6164,
+   "swap": [],
+   "forced": null
+  },
+  {
+   "t": "16:32:47",
+   "util": 96,
+   "used_mb": 6164,
+   "swap": [],
+   "forced": null
+  },
+  {
+   "t": "16:32:50",
+   "util": 97,
+   "used_mb": 6164,
+   "swap": [],
+   "forced": null
+  }
+ ],
+ "notes": [],
+ "gpu_before": {
+  "util": 42,
+  "used_mb": 1036,
+  "total_mb": 12288,
+  "others": [
+   {
+    "pid": 748830,
+    "name": "python",
+    "mb": 122
+   }
+  ],
+  "fullscreen": false,
+  "swap_running": [],
+  "util_samples": [
+   42,
+   39,
+   40,
+   27
+  ]
+ },
+ "finished": "2026-09-28 16:32:52"
+}

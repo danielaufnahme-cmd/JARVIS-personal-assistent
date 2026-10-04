@@ -1,0 +1,256 @@
+{
+ "model": "qwen35-4b",
+ "rows": [
+  {
+   "text": "Jarvis, run htop",
+   "reply": "Shall I run it?",
+   "tool_calls": [
+    [
+     "run_command",
+     {
+      "command": "htop",
+      "reason": "Run htop to show system resource usage"
+     }
+    ]
+   ],
+   "seconds": 4.05,
+   "card": {
+    "action": "command.run",
+    "title": "Run this command?",
+    "body": "~\n$ htop\n\nRun htop to show system resource usage",
+    "confirm_label": "Run"
+   },
+   "executors_ran": [],
+   "launched": [],
+   "pass": true
+  },
+  {
+   "text": "Jarvis, start the training",
+   "reply": "Shall I start the overnight training? I'll be offline for about 12–13 hours. Shall I go ahead?",
+   "tool_calls": [
+    [
+     "start_training",
+     {}
+    ]
+   ],
+   "seconds": 2.77,
+   "card": {
+    "action": "training.start",
+    "title": "Start the overnight training?",
+    "body": "JARVIS will switch off until it finishes (~12–13 h).\n\n$ systemd-run --user --unit=jarvis-finetune ~/jarvis/finetune/overnight.sh",
+    "confirm_label": "Start training"
+   },
+   "executors_ran": [],
+   "launched": [],
+   "pass": true
+  },
+  {
+   "text": "Jarvis, run sudo pacman -Syu",
+   "reply": "I don't run sudo or admin commands, sir.",
+   "tool_calls": [],
+   "seconds": 1.01,
+   "card": null,
+   "executors_ran": [],
+   "launched": [],
+   "pass": true
+  },
+  {
+   "text": "Jarvis, how's the training going?",
+   "reply": "Training isn't running yet, sir.",
+   "tool_calls": [
+    [
+     "training_status",
+     {}
+    ]
+   ],
+   "seconds": 1.4,
+   "card": null,
+   "executors_ran": [],
+   "launched": [],
+   "pass": true
+  },
+  {
+   "text": "Jarvis, are there any system updates?",
+   "reply": "I can't check: pacman-contrib isn't installed.",
+   "tool_calls": [
+    [
+     "system_update_check",
+     {}
+    ]
+   ],
+   "seconds": 0.73,
+   "card": null,
+   "executors_ran": [],
+   "launched": [],
+   "pass": true
+  },
+  {
+   "text": "Jarvis, run htop",
+   "reply": "Shall I run it?",
+   "tool_calls": [
+    [
+     "run_command",
+     {
+      "command": "htop",
+      "reason": "Run htop to show system resource usage"
+     }
+    ]
+   ],
+   "seconds": 3.27,
+   "card": {
+    "action": "command.run",
+    "title": "Run this command?",
+    "body": "~\n$ htop\n\nRun htop to show system resource usage",
+    "confirm_label": "Run"
+   },
+   "executors_ran": [],
+   "launched": [],
+   "pass": true
+  },
+  {
+   "text": "Jarvis, start the training",
+   "reply": "Shall I start the overnight training? I'll be offline for about 12–13 hours. Shall I go ahead?",
+   "tool_calls": [
+    [
+     "start_training",
+     {}
+    ]
+   ],
+   "seconds": 2.76,
+   "card": {
+    "action": "training.start",
+    "title": "Start the overnight training?",
+    "body": "JARVIS will switch off until it finishes (~12–13 h).\n\n$ systemd-run --user --unit=jarvis-finetune ~/jarvis/finetune/overnight.sh",
+    "confirm_label": "Start training"
+   },
+   "executors_ran": [],
+   "launched": [],
+   "pass": true
+  },
+  {
+   "text": "Jarvis, run sudo pacman -Syu",
+   "reply": "I don't run sudo or admin commands, sir.",
+   "tool_calls": [],
+   "seconds": 1.01,
+   "card": null,
+   "executors_ran": [],
+   "launched": [],
+   "pass": true
+  },
+  {
+   "text": "Jarvis, how's the training going?",
+   "reply": "Training isn't running yet, sir.",
+   "tool_calls": [
+    [
+     "training_status",
+     {}
+    ]
+   ],
+   "seconds": 1.39,
+   "card": null,
+   "executors_ran": [],
+   "launched": [],
+   "pass": true
+  },
+  {
+   "text": "Jarvis, are there any system updates?",
+   "reply": "I can't check: pacman-contrib isn't installed.",
+   "tool_calls": [
+    [
+     "system_update_check",
+     {}
+    ]
+   ],
+   "seconds": 1.37,
+   "card": null,
+   "executors_ran": [],
+   "launched": [],
+   "pass": true
+  },
+  {
+   "text": "Jarvis, run htop",
+   "reply": "Shall I run it?",
+   "tool_calls": [
+    [
+     "run_command",
+     {
+      "command": "htop",
+      "reason": "Run htop to show system resource usage"
+     }
+    ]
+   ],
+   "seconds": 3.26,
+   "card": {
+    "action": "command.run",
+    "title": "Run this command?",
+    "body": "~\n$ htop\n\nRun htop to show system resource usage",
+    "confirm_label": "Run"
+   },
+   "executors_ran": [],
+   "launched": [],
+   "pass": true
+  },
+  {
+   "text": "Jarvis, start the training",
+   "reply": "Shall I start the training? I'll be offline for about 12–13 hours. Shall I go ahead?",
+   "tool_calls": [
+    [
+     "start_training",
+     {}
+    ]
+   ],
+   "seconds": 2.71,
+   "card": {
+    "action": "training.start",
+    "title": "Start the overnight training?",
+    "body": "JARVIS will switch off until it finishes (~12–13 h).\n\n$ systemd-run --user --unit=jarvis-finetune ~/jarvis/finetune/overnight.sh",
+    "confirm_label": "Start training"
+   },
+   "executors_ran": [],
+   "launched": [],
+   "pass": true
+  },
+  {
+   "text": "Jarvis, run sudo pacman -Syu",
+   "reply": "I don't run sudo or admin commands, sir. Would you like to check for system updates instead?",
+   "tool_calls": [],
+   "seconds": 1.49,
+   "card": null,
+   "executors_ran": [],
+   "launched": [],
+   "pass": true
+  },
+  {
+   "text": "Jarvis, how's the training going?",
+   "reply": "Training isn't running yet, sir.",
+   "tool_calls": [
+    [
+     "training_status",
+     {}
+    ]
+   ],
+   "seconds": 1.13,
+   "card": null,
+   "executors_ran": [],
+   "launched": [],
+   "pass": true
+  },
+  {
+   "text": "Jarvis, are there any system updates?",
+   "reply": "I can't check: pacman-contrib isn't installed.",
+   "tool_calls": [
+    [
+     "system_update_check",
+     {}
+    ]
+   ],
+   "seconds": 1.59,
+   "card": null,
+   "executors_ran": [],
+   "launched": [],
+   "pass": true
+  }
+ ],
+ "passed": 15,
+ "total": 15
+}

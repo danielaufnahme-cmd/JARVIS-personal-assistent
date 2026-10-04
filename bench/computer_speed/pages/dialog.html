@@ -1,0 +1,17 @@
+<!doctype html><html><head><meta charset="utf-8"><title>jarvis-sandbox-23 · notes search</title>
+<link rel="stylesheet" href="common.css"><style>#ov{position:fixed;inset:0;background:rgba(10,15,30,.55);display:none;align-items:center;justify-content:center}
+#ov.show{display:flex}.dlg{background:#fff;border-radius:10px;padding:26px 30px;width:460px}.dlg h2{margin:0 0 8px}</style></head><body>
+<header><span class="brand">Notely</span><a href="#">Notes</a><a href="#">Settings</a></header>
+<main><h1>Search notes</h1>
+<form onsubmit="return go()"><input id="q" type="search" placeholder="Search all notes" autocomplete="off"> <button class="primary">Search</button></form>
+<div id="res" class="status"></div>
+<p style="margin-top:28px;color:#6b7280">Recent: Meeting notes · Groceries · Book ideas</p></main>
+<div id="ov"><div class="dlg"><h2>Stay in the loop!</h2><p>Get product news in your inbox every week.</p>
+<p style="margin-top:18px"><button class="primary" onclick="sub=true;hide()">Subscribe</button> <button onclick="hide()">No thanks</button></p></div></div>
+<script>let shown=false, sub=false;
+function pop(){ if(!shown){ shown=true; setTimeout(()=>document.getElementById('ov').classList.add('show'),700);} }
+document.getElementById('q').addEventListener('focus',pop); document.addEventListener('mousedown',pop,{once:true});
+function hide(){ document.getElementById('ov').classList.remove('show'); if(sub) document.title='jarvis-sandbox-23 · notes search · SUBSCRIBED'; }
+function go(){ if(document.getElementById('ov').classList.contains('show')) return false;
+ const q=document.getElementById('q').value.trim(); const r=document.getElementById('res'); r.textContent='3 results for "'+q+'"'; r.classList.add('show');
+ document.title='jarvis-sandbox-23 · notes search · searched: '+q+(sub?' SUBSCRIBED':''); return false; }</script></body></html>

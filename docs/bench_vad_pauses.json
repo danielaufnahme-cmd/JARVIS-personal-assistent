@@ -1,0 +1,44 @@
+{
+ "en": {
+  "hours": 1.57,
+  "500": {
+   "all": 819,
+   "cut": 108,
+   "short": 455,
+   "short_cut": 27
+  },
+  "600": {
+   "all": 819,
+   "cut": 80,
+   "short": 455,
+   "short_cut": 16
+  },
+  "700": {
+   "all": 819,
+   "cut": 57,
+   "short": 455,
+   "short_cut": 12
+  }
+ },
+ "cs": {
+  "hours": 1.28,
+  "500": {
+   "all": 384,
+   "cut": 138,
+   "short": 24,
+   "short_cut": 0
+  },
+  "600": {
+   "all": 384,
+   "cut": 99,
+   "short": 24,
+   "short_cut": 0
+  },
+  "700": {
+   "all": 384,
+   "cut": 71,
+   "short": 24,
+   "short_cut": 0
+  }
+ }
+}

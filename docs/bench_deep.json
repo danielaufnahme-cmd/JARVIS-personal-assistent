@@ -1,0 +1,35 @@
+{
+ "measured": "2026-09-26T14:35:09",
+ "gpu_before_mb": 6669,
+ "deep_max_tokens": 4000,
+ "runs": [
+  {
+   "question": "Compare Rust and Go for writing a small command-line tool, with the pros and cons of each.",
+   "working_s": 0.0,
+   "first_deep_s": 54.72,
+   "deep_done_s": 101.52,
+   "summary_s": 103.52,
+   "total_s": 103.76,
+   "deep_chars": 6540,
+   "deep_tok_s": 35.6,
+   "gpu_peak_mb": 9618,
+   "summary": "Working on it… The full comparison is on screen, sir. Go wins on speed and simplicity, while Rust offers better performance and safety.",
+   "cold": true,
+   "rss_35b_mb": 14282
+  },
+  {
+   "question": "Explain how public-key cryptography works, step by step.",
+   "working_s": 0.0,
+   "first_deep_s": 38.83,
+   "deep_done_s": 71.47,
+   "summary_s": 73.41,
+   "total_s": 73.6,
+   "deep_chars": 5790,
+   "deep_tok_s": 41.9,
+   "gpu_peak_mb": 9842,
+   "summary": "Working on it… Public-key cryptography uses a linked key pair where encryption and signing rely on hard math problems. The full answer is on screen if you need the details.",
+   "cold": false,
+   "rss_35b_mb": 14823
+  }
+ ]
+}

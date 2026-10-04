@@ -1,0 +1,29 @@
+# Single-word "Jarvis" wake word (build section 6). Use it with:
+#   [wake]
+#   model = "jarvis"          # -> wakeword/jarvis.onnx
+#   threshold = 0.06
+#   refractory_s = 2.0
+# The threshold is low on purpose: jarvisd confirms every trigger with Whisper (the transcript
+# must contain "jarvis") before it wakes, so this stage is tuned for recall.
+model: jarvis.onnx
+sha256: 761e5ddee0bec42f570a320144b2baf296a6f7e008087b28dccd08ab62c71c2a
+threshold: 0.06
+refractory_s: 2.0
+runtime: openWakeWord 0.4 (80 ms int16 frames, melspectrogram + embedding_model from openwakeword/resources)
+trained: 2026-09-25, livekit-wakeword (git main, conv_attention medium, 60k+6k+6k steps, 25 min on the RTX 3060)
+threshold_rule: >-
+  highest dev plain-"Jarvis" recall with dev false triggers <= 5/h on the speech corpus
+  (median of the thresholds within 0.5 points of the best), chosen on dev voices only
+
+# Held-out synthetic TEST split (voices never used in training or threshold tuning).
+# Re-run: uv run wakeword/benchmark.py
+metrics_test:
+  plain_jarvis_detection: {all: 92.2, clean: 98.0, room: 86.4, czech_accented: 86.3, clips: 1176}
+  hey_jarvis_detection: 89.6
+  jarvis_then_command_detection: 91.3
+  near_miss_trigger_rate: 12.5          # % of 1764 near-miss clips (Travis, jars, jar of, Java, service...)
+  false_triggers_per_hour: {all: 3.70, english: 3.65, czech: 3.92, hours: 14.07}
+baseline_hey_jarvis_default_0.5:
+  plain_jarvis_detection: 30.4
+  hey_jarvis_detection: 90.5
+  false_triggers_per_hour: 0.07

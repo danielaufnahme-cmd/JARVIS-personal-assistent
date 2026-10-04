@@ -1,0 +1,23 @@
+{
+ "jarvis-moe99": {
+  "resident_after_evict": 0.0,
+  "load_from_disk_s": 10.48,
+  "resident_after_use": 0.837,
+  "resident_after_willneed": 0.837,
+  "load_from_page_cache_s": 3.44
+ },
+ "qwen35-4b": {
+  "resident_after_evict": 0.0,
+  "load_from_disk_s": 4.34,
+  "resident_after_use": 1.0,
+  "resident_after_willneed": 1.0,
+  "load_from_page_cache_s": 1.32
+ },
+ "qwen35-2b": {
+  "resident_after_evict": 0.0,
+  "load_from_disk_s": 1.43,
+  "resident_after_use": 1.0,
+  "resident_after_willneed": 1.0,
+  "load_from_page_cache_s": 1.3
+ }
+}

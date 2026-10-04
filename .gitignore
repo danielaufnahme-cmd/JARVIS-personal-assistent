@@ -1,0 +1,15 @@
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+/models/
+*.gguf
+config.toml
+wakeword/data/
+wakeword/.venv-train/
+finetune/data/
+finetune/.venv-train/
+finetune/checkpoints/
+finetune/data-smoke/
+finetune/logs/
+finetune/STATUS
