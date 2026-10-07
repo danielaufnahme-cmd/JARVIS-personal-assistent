@@ -1,3 +1,5 @@
+pragma ComponentBehavior: Bound
+
 import QtQuick
 import qs
 import "fmt.js" as F
@@ -30,17 +32,28 @@ HudPanel {
     property string confirming: ""      // id of the row asking "cancel?"
 
     index: "05"
+    icon: "\uf073"
     label: "TODAY"
     k: view.k
     active: timers.length > 0
 
     header: [
-        Text {
-            text: p.timers.length > 0 ? p.timers.length + (p.timers.length === 1 ? " TIMER" : " TIMERS") + " RUNNING" : ""
-            color: Theme.primary
-            font.family: Theme.fontMono
-            font.pixelSize: Math.round(10 * p.k)
-            font.letterSpacing: 1.4
+        Rectangle {
+            visible: p.timers.length > 0
+            width: tbadge.implicitWidth + Math.round(16 * p.k)
+            height: Math.round(20 * p.k)
+            radius: height / 2 * Theme.round
+            color: Theme.alpha(Theme.primary, 0.12)
+            Text {
+                id: tbadge
+                anchors.centerIn: parent
+                text: p.timers.length + (p.timers.length === 1 ? " TIMER" : " TIMERS") + " RUNNING"
+                color: Theme.primary
+                font.family: Theme.fontLabel
+                font.pixelSize: Math.round(9.5 * p.k)
+                font.weight: Theme.labelWeight(Font.DemiBold)
+                font.letterSpacing: 1.4
+            }
         }
     ]
 
@@ -75,8 +88,13 @@ HudPanel {
                 readonly property bool ongoing: it.kind === "event" && it.due !== null && it.due <= p.view.now
                 readonly property bool hovered: hover.hovered
                 width: rows.width
-                height: Math.round((isTimer ? 58 : 50) * p.k)
+                height: Math.round((isTimer ? 62 : 52) * p.k)
                 visible: y + height <= (hint.visible ? hint.y - 8 : p.bodyItem.height) + 1
+                RowIn {
+                    target: row
+                    panel: p
+                    index: row.index
+                }
 
                 HoverHandler {
                     id: hover
@@ -91,21 +109,36 @@ HudPanel {
                     anchors.fill: parent
                     anchors.topMargin: 3
                     anchors.bottomMargin: 3
-                    color: row.asking ? Theme.alpha(Theme.error, 0.08) : Theme.alpha(Theme.text, 0.045)
+                    anchors.leftMargin: -6
+                    anchors.rightMargin: -6
+                    radius: Math.round(9 * p.k) * Theme.round
+                    color: row.asking ? Theme.alpha(Theme.error, 0.08) : Theme.alpha(Theme.text, 0.05)
+                    border.width: row.asking ? 1 : 0
+                    border.color: Theme.alpha(Theme.error, 0.3)
                     opacity: row.asking || (row.hovered && row.cancellable) ? 1 : 0
                     Behavior on opacity { NumberAnimation { duration: Theme.animFast } }
-                    Rectangle {
-                        width: 2
-                        height: parent.height
-                        color: row.asking ? Theme.error : Theme.primary
-                    }
                 }
 
+                // A timer's remaining time as a ring around its icon.
+                GradientArc {
+                    visible: row.isTimer
+                    x: glyph.x + glyph.width / 2 - width / 2 - Math.round(1 * p.k)
+                    y: glyph.y + glyph.height / 2 - height / 2
+                    width: Math.round(36 * p.k)
+                    height: width
+                    startDeg: 0
+                    span: 360
+                    thickness: 2.5
+                    glow: 0.5
+                    armed: p.settled
+                    value: row.it.dur ? Math.max(0, row.remain) / row.it.dur : 0
+                }
                 Text {
                     id: glyph
-                    x: 10
+                    x: Math.round(4 * p.k)
                     width: Math.round(22 * p.k)
-                    y: title.y + title.height / 2 - height / 2
+                    horizontalAlignment: Text.AlignHCenter
+                    y: (row.isTimer ? row.height / 2 : title.y + title.height / 2) - height / 2
                     text: row.isTimer ? "" : row.it.kind === "event" ? "" : ""
                     color: row.isTimer || row.ongoing ? Theme.primary : Theme.textMuted
                     font.family: Theme.fontMono
@@ -114,8 +147,8 @@ HudPanel {
                 Text {
                     id: title
                     anchors.left: glyph.right
-                    anchors.leftMargin: 8
-                    y: Math.round((row.isTimer ? 9 : 8) * p.k)
+                    anchors.leftMargin: Math.round(16 * p.k)
+                    y: Math.round((row.isTimer ? 12 : 9) * p.k)
                     width: (row.asking ? askRow.x : right.x) - x - 12
                     text: row.asking ? (row.isTimer ? "Cancel this timer?" : "Cancel this reminder?") : row.it.title
                     textFormat: Text.PlainText
@@ -148,24 +181,26 @@ HudPanel {
                     id: right
                     visible: !row.asking
                     anchors.right: parent.right
-                    anchors.rightMargin: 10
+                    anchors.rightMargin: 2
                     anchors.baseline: title.baseline
                     text: row.isTimer ? F.countdown(row.remain)
                         : row.ongoing ? "NOW"
                         : row.it.due !== null ? F.until(row.it.due, p.view.nowSlow) : ""
                     color: row.isTimer || row.ongoing ? Theme.primary : row.remain < 3600 ? Theme.text : Theme.textMuted
-                    font.family: Theme.fontMono
-                    font.pixelSize: Math.round((row.isTimer ? 16 : 11.5) * p.k)
-                    font.weight: row.isTimer ? Font.Medium : Font.Normal
+                    font.family: Theme.fontUi
+                    font.pixelSize: Math.round((row.isTimer ? 19 : 12) * p.k)
+                    font.weight: row.isTimer ? Font.Light : Font.Normal
+                    font.features: { "tnum": 1 }
                 }
                 Meter {
                     visible: row.isTimer && !row.asking
                     anchors.left: title.left
                     anchors.right: parent.right
-                    anchors.rightMargin: 10
+                    anchors.rightMargin: 2
                     anchors.top: title.bottom
-                    anchors.topMargin: Math.round(9 * p.k)
-                    height: 2
+                    anchors.topMargin: Math.round(10 * p.k)
+                    height: 3
+                    armed: p.settled
                     value: row.it.dur ? Math.max(0, row.remain) / row.it.dur : 0
                 }
 
@@ -198,9 +233,8 @@ HudPanel {
                     anchors.bottom: parent.bottom
                     anchors.left: title.left
                     anchors.right: parent.right
-                    anchors.rightMargin: 10
                     height: 1
-                    color: Theme.alpha(Theme.outline, 0.55)
+                    color: Theme.alpha(Theme.outline, 0.4)
                 }
             }
         }

@@ -1,8 +1,10 @@
-"""Section 24: the `showcase` tool and the session's fast path for "Jarvis, present yourself".
+"""Sections 24/25: the `showcase` tool and the session's fast path for "Jarvis, present yourself".
 
 The exact trigger phrases ("present yourself", "introduce yourself", "who are you", "what are you", "show me what you
-can do", and the same in German, Czech and Spanish) never reach the model: `session_turn` starts the scripted
-showcase at once (jarvis/integrations/showcase.py). The tool is for other wordings ("give my friend a demo").
+can do", and the same in German, Czech and Spanish) never reach the model: `session_turn` starts the showcase at
+once: section 25's cinematic one (jarvis/showcase/, through jarvisd's `showcase.start`, narrated in English), or with
+`[showcase] style = "script"` section 24's editable script (jarvis/integrations/showcase.py). The tool is for other
+wordings ("give my friend a demo"). "Jarvis, again" right after a finished cinematic showcase replays its finale.
 
 It never starts from external content: an utterance that carries <external_content> never matches, and the tool
 refuses in a turn (or the two after one) that brought an email, web page, file or clipboard text in, and after a
@@ -25,6 +27,7 @@ log = logging.getLogger(__name__)
 
 STARTED = ("Started: the showcase runs by itself now and speaks its own lines; you already said the first one. "
            "Say nothing more.")
+STARTED_CINEMATIC = "Started: the showcase runs by itself now and speaks all its own lines. Say nothing."
 # The model once called showcase for "Jarvis, say something in German" (2026-09-28). The tool only runs when the
 # user's own words are about JARVIS himself or a demo.
 _ASKS_SHOWCASE = re.compile(
@@ -105,9 +108,30 @@ def _watch_factory(ctx: ToolContext) -> Any:
     return lambda stop: factory(stop, mouse_px=px, exclude_paths=lambda: {p for p in (pointer_path,) if p})
 
 
+def _cinematic(ctx: ToolContext) -> bool:
+    return str(_opt(ctx, "style", "cinematic") or "cinematic") != "script"
+
+
+async def begin_cinematic(ctx: ToolContext, via: str) -> dict[str, Any]:
+    """Section 25: jarvisd runs it (`showcase.start`); it speaks every line itself, so the turn says nothing."""
+    from jarvis.events import UnknownCommand
+
+    if not _opt(ctx, "enabled", True):
+        return {"error": "The showcase is turned off in the config.", "status": "disabled"}
+    if ctx.bus is None:
+        return {"error": "The showcase runs only in jarvisd."}
+    try:
+        started = await ctx.bus.dispatch({"cmd": "showcase.start", "via": via})
+    except UnknownCommand:
+        return {"error": "The showcase runs only in jarvisd."}
+    except Exception as exc:  # noqa: BLE001 - already running, a computer task, turned off
+        return {"error": str(exc)}
+    return {"ok": True, "status": STARTED_CINEMATIC, "said": "", "end_turn": True, "started": started}
+
+
 async def begin(ctx: ToolContext, lang: str = "en", *, first_line_via_turn: bool = False) -> dict[str, Any]:
-    """Start the showcase in the background. The first `say` line goes out before this returns (through the agent's
-    turn when `first_line_via_turn`, so the turn ends on it; else straight to the bus)."""
+    """Start section 24's script showcase in the background. The first `say` line goes out before this returns
+    (through the agent's turn when `first_line_via_turn`, so the turn ends on it; else straight to the bus)."""
     from jarvis.integrations import computer as comp
 
     if not _opt(ctx, "enabled", True):
@@ -175,10 +199,11 @@ def intercept(text: str) -> bool:
     """A user turn while the showcase runs stops it first. True = the turn is fully handled (a stop word or the
     trigger again): nothing more is said. Otherwise the turn goes on as usual."""
     from jarvis.integrations.computer import is_stop_request
+    from jarvis.showcase import any_running, stop_any
 
-    if not sc.SHOWCASE.running:
+    if not any_running():
         return False
-    sc.SHOWCASE.stop("the user spoke")
+    stop_any("the user spoke")
     return is_stop_request(text) or sc.match_trigger(text) is not None
 
 
@@ -187,12 +212,24 @@ async def session_turn(session: Any, text: str) -> str | None:
     empty) = handled."""
     if intercept(text):
         return ""
-    lang = sc.match_trigger(text)
-    if lang is None:
-        return None
     agent = getattr(session, "agent", None)
     ctx = getattr(getattr(agent, "tools", None), "ctx", None)
     if not isinstance(ctx, ToolContext):
+        return None
+    if _cinematic(ctx):
+        from jarvis.showcase.trigger import match
+
+        if match(text) is None:
+            return None
+        log.info("showcase fast path: %r", text)
+        result = await begin_cinematic(ctx, "voice")
+        if result.get("ok"):
+            return ""
+        line = _line(FAILED_LINE, "en", _address(ctx))
+        _reply(ctx, line)
+        return line
+    lang = sc.match_trigger(text)
+    if lang is None:
         return None
     heard = getattr(agent, "user_language", None)
     if heard in ("de", "cs", "es"):
@@ -212,6 +249,8 @@ async def _showcase(ctx: ToolContext, args: dict[str, Any]) -> dict[str, Any]:
     if not _ASKS_SHOWCASE.search(ctx.turn_text or ""):
         log.info("showcase tool refused: %r doesn't ask for it", ctx.turn_text)
         return {"error": NOT_ASKED, "refused": True}
+    if _cinematic(ctx):
+        return await begin_cinematic(ctx, "tool")
     lang = str(args.get("language") or "").lower()[:2]
     if lang not in sc.LANGS:
         lang = sc.match_trigger(ctx.turn_text) or "en"

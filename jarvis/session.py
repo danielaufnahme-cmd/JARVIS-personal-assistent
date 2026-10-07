@@ -126,6 +126,8 @@ class Session:
     # --- open / close -----------------------------------------------------
 
     async def toggle(self) -> None:
+        if self._stop_showcase("click"):
+            return  # section 25: a click on the orb during the showcase only stops it (no session opens)
         if self.active:
             await self.stop()
         else:
@@ -279,10 +281,10 @@ class Session:
         return await session_turn(self, text)
 
     @staticmethod
-    def _stop_showcase(reason: str) -> None:
-        from jarvis.integrations.showcase import SHOWCASE
+    def _stop_showcase(reason: str) -> bool:
+        from jarvis.showcase import stop_any
 
-        SHOWCASE.stop(reason)
+        return stop_any(reason)
 
     def _stop_computer(self, text: str) -> bool:
         """Section 19: "stop" / "Jarvis, stop" while JARVIS is in control of the computer ends that task at once,
@@ -373,9 +375,9 @@ class Session:
 
     @staticmethod
     def _showcasing() -> bool:
-        from jarvis.integrations.showcase import SHOWCASE
+        from jarvis.showcase import any_running
 
-        return SHOWCASE.running  # the session stays open while the showcase speaks and types
+        return any_running()  # the session stays open while the showcase speaks and types
 
     def _busy(self) -> bool:
         if self.mode in BUSY_MODES or self._turn_task is not None or self.confirm_window_open() or self._showcasing():

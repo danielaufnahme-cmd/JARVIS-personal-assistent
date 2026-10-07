@@ -1,7 +1,7 @@
 import QtQuick
 import qs
 
-// A small technical button: monospace caps in a hairline frame; `accent` fills it with the primary.
+// A small pill button: caps in a hairline frame that lights up on hover; `accent` fills it with the primary.
 Rectangle {
     id: btn
 
@@ -13,17 +13,20 @@ Rectangle {
     signal clicked
 
     readonly property color tone: danger ? Theme.error : Theme.primary
-    implicitWidth: row.implicitWidth + Math.round(18 * k)
+    implicitWidth: row.implicitWidth + Math.round(22 * k)
     implicitHeight: Math.round(24 * k)
     width: implicitWidth
     height: implicitHeight
-    radius: 3 * Theme.round
+    radius: height / 2 * Theme.round
     opacity: enabled ? 1 : 0.4
     color: accent ? (mouse.pressed ? Qt.darker(tone, 1.15) : mouse.containsMouse ? Qt.lighter(tone, 1.08) : tone)
                   : Theme.alpha(tone, mouse.pressed ? 0.2 : mouse.containsMouse ? 0.12 : 0)
     border.width: accent ? 0 : 1
-    border.color: mouse.containsMouse ? Theme.alpha(tone, 0.8) : Theme.alpha(Theme.textMuted, 0.3)
+    border.color: mouse.containsMouse ? Theme.alpha(tone, 0.8) : Theme.alpha(Theme.textMuted, 0.24)
     Behavior on color { ColorAnimation { duration: Theme.animFast } }
+    Behavior on border.color { ColorAnimation { duration: Theme.animFast } }
+    scale: mouse.pressed ? 0.96 : 1
+    Behavior on scale { NumberAnimation { duration: 90 } }
 
     Row {
         id: row
@@ -43,7 +46,7 @@ Rectangle {
             anchors.verticalCenter: parent.verticalCenter
             text: btn.text
             color: btn.accent ? Theme.textOnPrimary : mouse.containsMouse ? Theme.text : Theme.textMuted
-            font.family: Theme.fontMono
+            font.family: Theme.fontLabel
             font.pixelSize: Math.round(10 * btn.k)
             font.weight: btn.accent ? Font.Bold : Font.Medium
             font.letterSpacing: 1.3

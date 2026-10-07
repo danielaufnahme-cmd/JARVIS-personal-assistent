@@ -10,6 +10,8 @@
   jarvisctl status              print the daemon's snapshot
   jarvisctl watch               print events until Ctrl-C
   jarvisctl raw '{"cmd":...}'   send any command
+  jarvisctl showcase            "present yourself": the showcase starts (stop it: jarvisctl showcase stop)
+  jarvisctl showcase --dry-run [--json]       every step with its timing; runs nothing, needs no daemon
   jarvisctl setup email [--remove]            store/remove the Gmail app password (system keyring)
   jarvisctl setup contacts FILE.vcf|FILE.csv  import contacts (merges by name)
   jarvisctl setup firm geonix [--remove]      store/remove the firm tracker's read-only token (keyring)
@@ -74,6 +76,12 @@ def parse(args):
         if len(rest) != 2 or rest[0] not in ("confirm", "cancel"):
             usage("draft needs confirm|cancel ID")
         return {"cmd": f"draft.{rest[0]}", "id": rest[1]}
+    if verb == "showcase":
+        if not rest:
+            return {"cmd": "showcase.start", "via": "jarvisctl"}
+        if rest == ["stop"]:
+            return {"cmd": "showcase.stop"}
+        usage("showcase takes nothing, stop, or --dry-run [--json]")
     if verb == "raw" and len(rest) == 1:
         try:
             cmd = json.loads(rest[0])
@@ -113,13 +121,14 @@ def lines(sock):
                 yield line
 
 
-def run_setup(args):
-    """`setup` needs the project's dependencies (keyring, imap-tools, …), so it runs in the uv venv."""
+def run_in_venv(module, args):
+    """`setup` and the showcase's dry run need the project's dependencies (keyring, imap-tools, …), so they run in
+    the uv venv."""
     repo = Path(__file__).resolve().parent.parent
     env = dict(os.environ)
     env["PYTHONPATH"] = str(repo) + (os.pathsep + env["PYTHONPATH"] if env.get("PYTHONPATH") else "")
     python = repo / ".venv" / "bin" / "python"
-    argv = ["-m", "jarvis.integrations.setup", *args]
+    argv = ["-m", module, *args]
     if python.exists():
         os.execve(str(python), [str(python), *argv], env)
     for uv in (Path.home() / ".local" / "bin" / "uv", Path("/usr/bin/uv")):
@@ -131,7 +140,9 @@ def run_setup(args):
 
 def main(args):
     if args and args[0] == "setup":
-        return run_setup(args[1:])
+        return run_in_venv("jarvis.integrations.setup", args[1:])
+    if args and args[0] == "showcase" and "--dry-run" in args[1:]:
+        return run_in_venv("jarvis.showcase", args[1:])
     action = parse(args)
     path = socket_path()
     sock = connect(path)
@@ -164,6 +175,8 @@ def main(args):
                 if msg.get("ok"):
                     if "result" in msg and action.get("cmd") == "ping":
                         print(msg["result"])
+                    elif action.get("cmd") == "showcase.stop":
+                        print("stopped" if (msg.get("result") or {}).get("stopped") else "no showcase was running")
                     return 0
                 print(f"jarvisctl: {msg.get('error', 'error')}", file=sys.stderr)
                 return 1

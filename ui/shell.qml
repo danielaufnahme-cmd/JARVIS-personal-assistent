@@ -12,6 +12,7 @@ ShellRoot {
     }
 
     CornerPill {
+        id: cornerPill
         ipc: jarvisIpc
     }
 
@@ -32,6 +33,27 @@ ShellRoot {
     ReadingPanel {
         ipc: jarvisIpc
         store: hudStore
+    }
+
+    // Section 25: the showcase's small cores and its choreography, on a click-through layer that exists only while a
+    // showcase runs (and while its last cores dissolve at the end); a stop or a takeover unloads it at once.
+    // (Loaded before the showcase.start event reaches its parts: Ipc sets showcaseActive first. Section 24's script
+    // showcase has no choreography; its layer goes again when it ends, ShowcaseCores.)
+    property bool coresWanted: false
+    Connections {
+        target: jarvisIpc
+        function onShowcaseActiveChanged() {
+            if (jarvisIpc.showcaseActive)
+                root.coresWanted = true;
+        }
+    }
+    Loader {
+        active: root.coresWanted
+        sourceComponent: ShowcaseCores {
+            ipc: jarvisIpc
+            pill: cornerPill
+            onFinished: root.coresWanted = false
+        }
     }
 
     // The HUD exists only while it is open (plus its exit animation): nothing of it runs once it is closed.

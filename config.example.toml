@@ -359,13 +359,29 @@ stale_after_s = 1800               # older numbers are marked stale (a failed re
 enabled = true
 
 [showcase]
-# Section 24: "Jarvis, present yourself" / "who are you" / "show me what you can do" (also de/cs/es) runs a scripted
-# demonstration: JARVIS speaks while it opens YouTube in a new Zen window and Writer on empty workspaces and types a
-# text. No model involved. Edit the script (spoken lines, steps, text, languages) in ~/.config/jarvis/showcase.toml;
-# check it with `uv run python -m jarvis.integrations.showcase check`. Stop it: "stop", Escape or move the mouse.
+# "Jarvis, present yourself" / "who are you" / "show me what you can do" (also de/cs/es), `jarvisctl showcase` or the
+# pill menu's Showcase. Section 25 (style = "cinematic", the default): a ~2 min choreographed demo with title cards,
+# the travelling pill, cores and a finale: the HUD, fastfetch + nvidia-smi in JARVIS's own terminal, live coding
+# (Neovim types a small program and runs it), "what does my day look like?" answered from the weather, reminders and
+# calendar, the web, each window scene on a fresh empty workspace and closed afterwards. No model involved; the script
+# is jarvis/showcase/script.toml; rehearse it with `jarvisctl showcase --dry-run`. Section 24 (style = "script"): the
+# editable script in ~/.config/jarvis/showcase.toml (`uv run python -m jarvis.integrations.showcase check`).
+# Stop either: "stop" (or any question), click the orb, `jarvisctl showcase stop`; the cinematic one also stops on any
+# key, click or mouse move (if JARVIS can read the input devices), the script one on Escape or a mouse move.
 enabled = true
-script = ""                    # "" = ~/.config/jarvis/showcase.toml (copied from jarvis/showcase.default.toml on first use)
+style = "cinematic"            # "cinematic" | "script"
 mute = false                   # true: nothing is spoken (the steps still run)
+script = ""                    # style "script": "" = ~/.config/jarvis/showcase.toml (copied from jarvis/showcase.default.toml)
+terminal = ""                  # cinematic: "" = [desktop] terminal (ghostty), then kitty, alacritty, foot, gnome-terminal, xterm
+browser = ""                   # cinematic: "" = the default browser (Zen), started with its own profile and closed afterwards
+fresh_workspace = true         # cinematic: each window scene on an empty workspace, then back to yours
+workspace_settle_s = -1.0      # after a switch, for its animation (-1 = Hyprland's own `workspaces` animation)
+takeover = true                # cinematic: any real key, click, wheel or mouse move stops it (needs the input group)
+takeover_grace_s = 2.0         # input in the first seconds doesn't count (the menu click)
+takeover_mouse_px = 60
+close_grace_s = 3.0            # its own windows: SIGTERM, then SIGKILL after this
+scroll = true                  # the web scene glides down the page and switches to its second tab
+code_cps = 150.0               # live coding's typing speed, characters a second (the script's own `cps` wins)
 
 [computer]                     # section 19: type_text / press_keys / mouse, and computer_task (screenshot → 35B vision → mouse/keyboard)
 enabled = true
@@ -399,3 +415,7 @@ vram_need_mb = 5500            # free VRAM the 35B needs before it loads for vis
 step_vram_need_mb = 5000       # the same for a small step model
 direct = true                  # "open X", "search the web for Y", "open YouTube and ..." start with open_app / open_url
 search_url = "https://duckduckgo.com/?q={q}"   # Zen's search engine
+
+[ui]                           # read by the UI itself (ui/Theme.qml watches ~/.config/jarvis/config.toml), not by jarvisd
+reduce_motion = false          # true: the HUD and the showcase drop their motion (no drift, sparks, sheens, count-ups)
+lean = false                   # true: same look, but continuous motion steps on a 30 Hz clock and the heavy effects thin out

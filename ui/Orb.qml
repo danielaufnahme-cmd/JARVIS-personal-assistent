@@ -19,6 +19,9 @@ Item {
     property bool hovered: false
     property bool micBusy: false               // section 13: another app records the mic, JARVIS isn't listening
     property bool inControl: false             // section 19: a computer_task is driving the mouse and keyboard
+    // true: hold still (no breathing). The pill sets it while the fullscreen HUD covers it in lean mode: every tick
+    // of its breathing made the HUD draw a frame too (one GUI-thread animation clock).
+    property bool paused: false
 
     function flashAlert() {
         flashAnim.restart();
@@ -83,7 +86,7 @@ Item {
     Timer {
         interval: 80
         repeat: true
-        running: orb.idleish && !orb.offline && orb.visible
+        running: orb.idleish && !orb.offline && orb.visible && !orb.paused
         onTriggered: orb.breath = 0.5 - 0.5 * Math.cos(2 * Math.PI * (Date.now() % Theme.breathMs) / Theme.breathMs)
         onRunningChanged: if (!running) orb.breath = 0
     }

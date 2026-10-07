@@ -151,7 +151,7 @@ Item {
             Rectangle {
                 id: dot
                 anchors.verticalCenter: parent.verticalCenter
-                width: 6; height: 6; radius: 3
+                width: 6; height: 6; radius: 3 * Theme.round
                 color: Theme.primary
                 SequentialAnimation on opacity {
                     running: view.writing && card.visible && card.open

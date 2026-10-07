@@ -27,7 +27,7 @@ model has no send tool at all. The build history and the full spec are in `JARVI
 | "Click the first video" / "Open the browser and search for otters" / "Fill in this form with my name" / "Rename the files in this folder by date" | **Computer control**: starts right away, no card (since 2026-09-27; `[computer] confirm = true` brings the card back): JARVIS says "Taking control, sir.", the pill shows **IN CONTROL** (amber) and JARVIS works step by step: a screenshot, the 35B looks at it and picks one action, then the next screenshot (at most 40 steps / 5 minutes). It says what it did at the end. **To take over at any time: say "stop", press Esc, or move the mouse.** It stops and hands login, password, 2FA, payment and banking steps, sudo/polkit prompts and anything that deletes files outside the goal back to you. Screenshots stay in memory |
 | "Make a file called shopping.txt with milk and eggs" / "Add bread to it" / "What's in notes.txt?" | New files go straight into `~/Documents/JARVIS` (or another folder you name under Documents, Desktop, Downloads, Projects, Pictures, Music, Videos); overwriting a file or writing elsewhere asks first; dotfiles, `~/.config`, `~/.ssh`, `~/.local` are always refused |
 | "Compare Rust and Go for a CLI tool" / "Think hard about…" | **Deep mode**: the full answer streams into a reading panel, JARVIS speaks a one-line summary |
-| "Jarvis, present yourself" / "Show yourself" / "Introduce yourself" / "Who are you?" / "What are you?" / "Show me what you can do" (also German, Czech, Spanish) | **The showcase** (since 2026-09-28): a scripted demo, no model involved. JARVIS introduces himself while it switches to an **empty** workspace and opens YouTube in a **new** Zen window, then another empty workspace with **Neovim** (your "text editor", in a new Ghostty window), where it types a short introduction at a human pace; at the end it opens the **fullscreen HUD** and says the closing line. About 35 s; the pill shows **SHOWCASE**. Nothing is saved (quit that nvim with `:q!`). **Stop it any time: say "stop", press Esc or move the mouse**: it goes quiet at once, types nothing more and leaves the windows open. It never touches your other windows: it only uses empty workspaces, and types only into the Ghostty window it opened, with nvim checked to run in it (focus checked before every word). Edit what it says, types, opens and in which order in `~/.config/jarvis/showcase.toml` (see below; LibreOffice Writer can go back in with `open_app = "lowriter --nologo --norestore"`) |
+| "Jarvis, present yourself" / "Show yourself" / "Introduce yourself" / "Who are you?" / "What are you?" / "Show me what you can do" (also German, Czech, Spanish) | **The cinematic showcase** (section 25, the default since 2026-10-07): a ~2 min choreographed demo, narrated in English, no model involved: the HUD, then numbered scenes with title cards while the pill travels across the screen: *All local*, *This machine* (fastfetch + nvidia-smi typed in JARVIS's own terminal), **Live coding** (Neovim types a small Python program live and runs it: an arc reactor in the terminal), *Your day* ("What does my day look like?" answered on a card from the weather, reminders and calendar: only counts and times, never their words), *On the web* (Wikipedia's J.A.R.V.I.S. page in JARVIS's own Zen window, then Iron Man), and a finale that gathers the cores into the JARVIS wordmark. Each window scene opens on an **empty** workspace and is closed afterwards (by PID: only what it started), then you're back on your workspace. Stop it any time: "stop" (or any question), click the orb, `jarvisctl showcase stop`; also any key, click or mouse move if JARVIS can read the input devices (the `input` group). "Jarvis, again" within 90 s replays the finale. Also `jarvisctl showcase` and the pill menu; rehearse with `jarvisctl showcase --dry-run`. See *The cinematic showcase* below. With `[showcase] style = "script"`: **the script showcase** (since 2026-09-28): a scripted demo, no model involved. JARVIS introduces himself while it switches to an **empty** workspace and opens YouTube in a **new** Zen window, then another empty workspace with **Neovim** (your "text editor", in a new Ghostty window), where it types a short introduction at a human pace; at the end it opens the **fullscreen HUD** and says the closing line. About 35 s; the pill shows **SHOWCASE**. Nothing is saved (quit that nvim with `:q!`). **Stop it any time: say "stop", press Esc or move the mouse**: it goes quiet at once, types nothing more and leaves the windows open. It never touches your other windows: it only uses empty workspaces, and types only into the Ghostty window it opened, with nvim checked to run in it (focus checked before every word). Edit what it says, types, opens and in which order in `~/.config/jarvis/showcase.toml` (see below; LibreOffice Writer can go back in with `open_app = "lowriter --nologo --norestore"`) |
 | "Go full screen" / "Close full screen" | Opens or closes the HUD |
 | "Go to sleep" | Ends the session and unloads the models now |
 | "Code me a snake game in Python" | A **confirm card** first; then opencode builds it in `~/Projects/<name>` on the heavier Qwen3.8-27B (Ollama) in a ghostty window, where you approve each shell command. The voice stays on the small model. When opencode exits: "Your project … is ready in Projects." "How's the project going?" / "Stop the coding job" (confirmed too). One job at a time |
@@ -71,7 +71,7 @@ nothing, and computer control, typing and closing apps are refused in a turn tha
 | Control | Action |
 |---|---|
 | **Left-click** orb or wordmark | Start a session (mic on, no wake word needed) / end it (stops listening and speech; the model stays loaded until its idle timeout) |
-| **Right-click** orb or wordmark | Menu: (while a coding job runs) *Coding: <name> · 12 min*; *Unload model now*, *Mute / unmute wake word*, *Lower other audio while active* (✓ = on), *Open HUD*, *Brain: Fast* / *Brain: Smart* (✓ = current) |
+| **Right-click** orb or wordmark | Menu: (while a coding job runs) *Coding: <name> · 12 min*; *Unload model now*, *Mute / unmute wake word*, *Lower other audio while active* (✓ = on), *Open HUD*, *Showcase* / *Stop showcase*, *Daily briefing* (✓ = on), *Brain: Fast* / *Brain: Smart* (✓ = current), the fast model and where it lives on the GPU |
 | **Speaker** icon, click | Mute / unmute JARVIS's voice only (amber when muted). Muted, it still answers in text in the HUD |
 | **Volume bars**, scroll | JARVIS's volume in 5 % steps. **Independent of the system volume**: changing or muting the system volume never changes how loud JARVIS is |
 | **Volume bars**, click | A slider popup with the percentage |
@@ -82,7 +82,15 @@ model is loaded (it always is, normally); the ring counts down only while the 35
 use); a thin slash = another app has the mic; flare + spinning arc = waking/loading; pulsing with your voice = listening; rotating
 arc = thinking; pulsing with its voice = speaking; a small orbiting dot = deep mode; amber = waiting for your
 confirmation; three flashes + a slide-out text = a reminder or timer is due; an outline at 40 % = jarvisd isn't
-running. Like the Noctalia bar, the pill hides over fullscreen windows (games, video) unless JARVIS is busy.
+running. Like the Noctalia bar, the pill hides over fullscreen windows (games, video) unless JARVIS is busy. During the
+showcase the pill leaves its corner and travels across the screen with a trail of light, and comes home at the end.
+
+**Corners, round or square.** The corner button in the top-right corner of the screen (`ui/CornerToggle.qml`, which
+runs `~/.local/bin/corners-toggle`) switches the whole desktop between rounded and 90° corners; the mode lives in
+`~/.local/state/corners/mode`. JARVIS watches that file (`ui/Theme.qml`, `Theme.round`), so every corner of its UI
+follows it at once, no restart: the pill and its popups, the draft and action cards, the reading panel, the HUD's
+glass panels, chips, buttons and bars, and the showcase's cards and title plates. Round things stay round (the orb,
+the core's rings, sparks).
 
 **Draft card** (under the pill): recipient, subject, body; **Confirm** / **Edit** (edit the body, Ctrl+Enter saves,
 Esc cancels the edit) / **Cancel**. Every button carries the draft's id, so an old card can never send a newer draft.
@@ -98,7 +106,13 @@ first; the panel comes back after it. While the HUD is open, the answer is in th
 ## The HUD (fullscreen)
 
 Open: **SUPER+J**, the pill's fullscreen button, the right-click menu, or "go full screen". Close: **Esc**, SUPER+J,
-the ✕ ESC button, or "close full screen". While it's open it has the keyboard.
+the ✕ ESC button, or "close full screen". While it's open it has the keyboard. It opens at once (the UI doesn't wait
+for jarvisd), with a ~1 s entrance: the ground and a fine grid sweep out from the core, the core's rings rotate home
+and the orb pops in, the glass panels fly in from their edges and their rows fade up line by line, numbers count up.
+The core is lit by a shader (aura, the voice's spectrum round the orb, comets on the rings, a pulse on every state
+change); ⑥ draws the last minute of CPU and GPU as sparklines and VRAM as a gauge. Everything moves on the render
+thread. `[ui] reduce_motion = true` drops the motion, `[ui] lean = true` keeps the look but caps the HUD at 30 frames
+a second (for a busy GPU); both are read by the UI itself from `~/.config/jarvis/config.toml`, live.
 
 | Panel | Click |
 |---|---|
@@ -287,10 +301,37 @@ and restart jarvisd. The sections:
 | `[computer]` | computer control: `enabled`, `max_steps` (40), `max_seconds` (300), `image_width` (1280), `settle_s`, `takeover_mouse_px`, `debug_screenshots` (off: screenshots never touch the disk) |
 | `[news]` / `[web]` | RSS feeds (a `[[news.feeds]]` list replaces the defaults), search backend (`ddgs` or your own SearXNG) |
 | `[weather]` / `[calendar]` / `[reminders]` / `[system]` | location fallback; `ics_url`; missed-reminder grace; what counts as the model's RAM |
-| `[showcase]` | `enabled`, `script` ("" = `~/.config/jarvis/showcase.toml`), `mute` (true: nothing spoken, the steps still run) |
+| `[showcase]` | `enabled`, `style` (`"cinematic"` / `"script"`), `mute` (true: nothing spoken, the steps still run); cinematic: `terminal`, `browser`, `fresh_workspace`, `workspace_settle_s`, `takeover` (+ `_grace_s`, `_mouse_px`), `close_grace_s`, `scroll`, `code_cps`; script: `script` ("" = `~/.config/jarvis/showcase.toml`) |
 | `[coding]` | `model` (Ollama tag), `num_ctx` (32768), `projects_dir`, `terminal`, `min_free_vram_gb` (6), `game_classes` |
+| `[ui]` | read by the UI (`ui/Theme.qml`), not jarvisd, and applied live: `reduce_motion` (false), `lean` (false: the HUD's continuous motion on a 30 Hz clock, fewer sparks) |
 
-### The showcase script ("present yourself")
+### The cinematic showcase (section 25)
+
+`jarvis/showcase/`: the scenes, lines, pill paths and timings are data in `jarvis/showcase/script.toml` (English,
+`{greeting}` and `{address}` filled in); the runner sends `showcase.*` events that the UI's choreography follows
+(title cards, frames around the windows, cards, the typing's progress, sparks, the finale). Rehearse without running
+anything (no daemon needed; it reads which empty workspace each scene would get):
+
+```sh
+jarvisctl showcase --dry-run              # every step with its timing; --json for the timeline
+jarvisctl showcase                        # run it now (the pill menu's Showcase does the same)
+jarvisctl showcase stop
+uv run scripts/livecode_check.py          # the live coding's typist in a headless Neovim (no window)
+```
+
+- **Only its own windows:** the terminal runs `jarvis/showcase/typer.py` (it prints the command at a typing pace and
+  runs it: no synthetic input), the live coding is Neovim with `jarvis/showcase/livecode.lua` as its init file (it
+  types `jarvis/showcase/livecode_demo.py` into a scratch file in `$XDG_RUNTIME_DIR` itself, writes it, and runs it in
+  a terminal split), the browser is Zen with its own profile (`~/.local/share/jarvis/showcase/profiles/`, onboarding
+  off) so the PID owns the window. Each is its own process group, closed with SIGTERM (SIGKILL after
+  `close_grace_s`). The only key ever sent is the web tour's Page Down / Ctrl+Page Down, and only while its own
+  browser has the focus.
+- **A fresh workspace per window scene:** the lowest empty workspace that isn't on screen or bound to another
+  monitor, read live; the window opens only once the switch (and its animation) is done; afterwards JARVIS switches
+  back, unless you went somewhere else yourself. No empty workspace: that scene is only told.
+- `[showcase] style = "script"` brings back section 24's editable script below.
+
+### The showcase script ("present yourself", style = "script")
 
 `~/.config/jarvis/showcase.toml` is created from `jarvis/showcase.default.toml` the first time the showcase runs
 (delete it to get the default back; a copy you never edited is updated to a newer default by itself, with a
@@ -356,7 +397,12 @@ uv run scripts/eval_deep_routing.py --set all   # does the voice model send the 
 uv run scripts/bench_deep.py                    # a deep answer end to end on the real models (loads the 35B)
 uv run scripts/bench_fast.py --help             # voice-model benchmark (section 12)
 uv run scripts/bench_voice.py --runs 6          # end-to-end voice latency (stop jarvisd first; silent)
-dev/hud_harness/render.sh 2560 1440 deep        # render the HUD offscreen to a PNG (nothing on screen)
+dev/hud_harness/render.sh 2560 1440 deep        # render the HUD offscreen to a PNG (GPU/OpenGL, nothing on screen)
+HUD_ROUND=0 dev/hud_harness/render.sh            # … in square-corner mode (HUD_SOFTWARE=1: no GPU, HUD_LEAN=1, …)
+dev/hud_harness/render_pill.sh pill.png on      # the pill with its menu, volume and an alert: prints PILL OK
+dev/hud_harness/render_showcase_fx.sh frames    # the showcase's choreography: titles, frames, beats, finale (PNGs)
+dev/hud_harness/render_showcase_fx.sh stop      # a takeover in the finale: everything gone at once (FX OK)
+dev/hud_harness/check_ipc.sh                    # ui/Ipc.qml's event handling: IPC OK
 dev/hud_harness/render_reading.sh streaming     # render the corner reading panel offscreen
 python3 dev/mock_daemon.py                      # fake jarvisd for UI work (use JARVIS_SOCKET=<tmp> with qs -p ui)
 ```

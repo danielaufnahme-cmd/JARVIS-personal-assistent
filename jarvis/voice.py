@@ -571,9 +571,16 @@ class Voice:
             self.speaker.stop()
         if self.player is not None:
             self.player.stop()
-        from .integrations.showcase import SHOWCASE
+        from .showcase import stop_any
 
-        SHOWCASE.stop("interrupted")  # section 24: a stop word or a barge-in also ends the showcase at once
+        stop_any("interrupted")  # sections 24/25: a stop word or a barge-in also ends the showcase at once
+
+    def showcase_lines(self) -> None:
+        """Section 25: the showcase's lines go out as `reply` events outside any turn. They are spoken in English
+        (the voice of the last turn may have been Czech), and an earlier barge-in's mute no longer applies."""
+        self._reply_muted = False
+        if self.speaker is not None:
+            self.speaker.language = "en"
 
     def _say_briefing(self) -> bool:
         """Section 18 (jarvis/briefing.py; the daemon sets `self.briefing`): once a day, the first wake/click says

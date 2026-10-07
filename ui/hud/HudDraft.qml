@@ -135,43 +135,45 @@ Item {
         anchors.fill: parent
     }
 
+    // v2: a rounded glass sheet, nearly opaque so the draft reads cleanly, with a hairline in the draft's accent
+    // and a soft accent halo around it that breathes while it waits for an answer.
+    readonly property real rad: Math.round(18 * card.k) * Theme.round
+    property real waitGlow: 0.5
+    SequentialAnimation on waitGlow {
+        running: card.visible && card.result === "" && !Theme.reduceMotion && !Theme.lean   // lean mode: still glow
+        loops: Animation.Infinite
+        NumberAnimation { to: 1; duration: 1600; easing.type: Easing.InOutSine }
+        NumberAnimation { to: 0.35; duration: 1600; easing.type: Easing.InOutSine }
+    }
     Rectangle {
         anchors.fill: parent
-        color: Theme.alpha(Theme.surfaceRaised, 0.97)
-        border.width: 1
-        border.color: Theme.alpha(card.accent, 0.35)
-        Behavior on border.color { ColorAnimation { duration: Theme.animSlow } }
+        anchors.margins: -Math.round(7 * card.k)
+        radius: card.rad + Math.round(7 * card.k) * Theme.round
+        color: Theme.transparent
+        border.width: Math.round(6 * card.k)
+        border.color: Theme.alpha(card.accent, 0.07 * card.waitGlow)
     }
     Rectangle {
-        width: parent.width
-        height: 2
-        color: card.accent
-        Behavior on color { ColorAnimation { duration: Theme.animSlow } }
+        anchors.fill: parent
+        radius: card.rad
+        gradient: Gradient {
+            GradientStop { position: 0; color: Theme.alpha(Theme.mix(Theme.surfaceRaised, card.accent, 0.05), 0.97) }
+            GradientStop { position: 1; color: Theme.alpha(Theme.mix(Theme.surface, Theme.bg, 0.3), 0.97) }
+        }
+        border.width: 1
+        border.color: Theme.alpha(card.accent, 0.3 + 0.25 * card.waitGlow)
+        Behavior on border.color { ColorAnimation { duration: Theme.animSlow } }
     }
-    // Brackets, like the panels, but in the draft's accent.
-    Repeater {
-        model: 4
-        delegate: Item {
-            required property int index
-            readonly property bool r: index === 1 || index === 2
-            readonly property bool b: index >= 2
-            readonly property real bl: Math.round(16 * card.k)
-            x: r ? card.width + 5 - bl : -5
-            y: b ? card.height + 5 - bl : -5
-            width: bl
-            height: bl
-            Rectangle {
-                y: parent.b ? parent.height - 1 : 0
-                width: parent.width
-                height: 1
-                color: card.accent
-            }
-            Rectangle {
-                x: parent.r ? parent.width - 1 : 0
-                width: 1
-                height: parent.height
-                color: card.accent
-            }
+    // the accent across the top, fading out to both sides
+    Rectangle {
+        x: card.rad
+        width: parent.width - 2 * card.rad
+        height: 2
+        gradient: Gradient {
+            orientation: Gradient.Horizontal
+            GradientStop { position: 0; color: Theme.alpha(card.accent, 0) }
+            GradientStop { position: 0.5; color: card.accent }
+            GradientStop { position: 1; color: Theme.alpha(card.accent, 0) }
         }
     }
 
@@ -197,7 +199,7 @@ Item {
                 anchors.verticalCenter: parent.verticalCenter
                 width: 7
                 height: 7
-                radius: 3.5
+                radius: 3.5 * Theme.round
                 color: card.accent
             }
             Text {
@@ -209,9 +211,9 @@ Item {
                     : card.result === "failed" ? (card.isAction ? "FAILED" : "SEND FAILED")
                     : card._editing ? "EDITING" : "AWAITING CONFIRMATION")
                 color: card.accent
-                font.family: Theme.fontMono
+                font.family: Theme.fontLabel
                 font.pixelSize: Math.round(11 * card.k)
-                font.weight: Font.DemiBold
+                font.weight: Theme.labelWeight(Font.DemiBold)
                 font.letterSpacing: 1.8
             }
             Text {
@@ -250,7 +252,7 @@ Item {
                 text: "TO"
                 width: Math.round(64 * card.k)
                 color: Theme.textMuted
-                font.family: Theme.fontMono
+                font.family: Theme.fontLabel
                 font.pixelSize: Math.round(10.5 * card.k)
                 font.letterSpacing: 1.4
                 height: toRow.height
@@ -287,7 +289,7 @@ Item {
                 text: "SUBJECT"
                 width: Math.round(64 * card.k)
                 color: Theme.textMuted
-                font.family: Theme.fontMono
+                font.family: Theme.fontLabel
                 font.pixelSize: Math.round(10.5 * card.k)
                 font.letterSpacing: 1.4
                 height: subj.height

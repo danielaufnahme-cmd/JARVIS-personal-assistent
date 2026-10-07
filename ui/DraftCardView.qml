@@ -150,7 +150,7 @@ Rectangle {
             Rectangle {
                 id: dot
                 anchors.verticalCenter: parent.verticalCenter
-                width: 6; height: 6; radius: 3
+                width: 6; height: 6; radius: 3 * Theme.round
                 color: card.accent
                 Behavior on color { ColorAnimation { duration: Theme.animSlow } }
             }

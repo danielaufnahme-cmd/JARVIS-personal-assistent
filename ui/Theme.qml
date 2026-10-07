@@ -75,15 +75,54 @@ Singleton {
     }
 
     // ── corners ──
-    // 1 = rounded, 0 = square. Follows ~/.local/state/corners/mode, which the bar's corner
-    // button flips through ~/.local/bin/corners-toggle. Every radius is multiplied by this.
+    // 1 = rounded, 0 = square. Follows ~/.local/state/corners/mode, which the corner button (CornerToggle.qml)
+    // flips through ~/.local/bin/corners-toggle. EVERY radius in the UI is multiplied by this (pill, cards, the HUD's
+    // glass panels and chips, buttons, popups, the showcase's plates), so the whole UI goes 90° in "square" mode and
+    // round again otherwise, live: the script replaces the file atomically and the watch reloads it within a frame.
+    // A missing or unreadable file means round (corners-toggle's own default).
     property real round: 1
+    function applyCorners(mode) {
+        const r = String(mode || "").trim().toLowerCase() === "square" ? 0 : 1;
+        if (r !== theme.round) {
+            theme.round = r;
+            console.info("Theme: corners", r ? "round" : "square");
+        }
+    }
     FileView {
-        path: Quickshell.env("HOME") + "/.local/state/corners/mode"
+        id: cornersFile
+        path: Quickshell.env("HOME") + "/.local/state/corners/mode"   // corners-toggle's MODE_FILE (not XDG_STATE_HOME)
         watchChanges: true
         printErrors: false
         onFileChanged: reload()
-        onLoaded: theme.round = text().trim() === "square" ? 0 : 1
+        onLoaded: theme.applyCorners(text())
+        onLoadFailed: theme.applyCorners("round")
+    }
+
+    // ── motion ([ui] in ~/.config/jarvis/config.toml, read here directly and watched) ──
+    // reduce_motion = true: no drifting backdrop, sparks, sheens or count-ups; things simply appear (fewer redraws).
+    // lean = true: everything stays, but what moves continuously steps on one shared 30 Hz clock instead of the
+    // monitor's refresh rate, and the heaviest effects thin out (fewer sparks, a plain sweep): for a busy GPU, a game
+    // or screen streaming in the background.
+    property bool reduceMotion: false
+    property bool lean: false
+    onReduceMotionChanged: console.info("Theme: reduce motion", reduceMotion)
+    onLeanChanged: console.info("Theme: lean", lean)
+    // `KEY = true|false` (a bare TOML boolean) inside the [ui] table; "" when it isn't set there.
+    function parseUiBool(src, key) {
+        const sec = String(src).match(/^\[ui\][^\n]*\n([\s\S]*?)(?=^\s*\[|(?![\s\S]))/m);
+        const m = sec ? sec[1].match(new RegExp("^\\s*" + key + "\\s*=\\s*(true|false)\\b", "m")) : null;
+        return m ? m[1] : "";
+    }
+    FileView {
+        path: (Quickshell.env("XDG_CONFIG_HOME") || (Quickshell.env("HOME") + "/.config")) + "/jarvis/config.toml"
+        watchChanges: true
+        printErrors: false
+        onFileChanged: reload()
+        onLoaded: {
+            const src = text();
+            theme.reduceMotion = theme.parseUiBool(src, "reduce_motion") === "true";
+            theme.lean = theme.parseUiBool(src, "lean") === "true";
+        }
     }
 
     // ── palette tokens ──
@@ -106,6 +145,7 @@ Singleton {
     readonly property color primaryBright: Qt.lighter(primary, 1.28)   // the "clearly on" listening colour
     readonly property color primaryPale: Qt.lighter(primary, 1.55)     // specular highlight in the orb core
     readonly property color warnDeep: Qt.darker(warn, 2.4)
+    readonly property color white: "#ffffff"                            // a glint's hot centre (sheens, sparks)
     readonly property color transparent: "transparent"
 
     function alpha(c, a) {
@@ -113,9 +153,16 @@ Singleton {
     }
 
     // ── type ──
-    // The bar's monospace (fc-match monospace), used for the wordmark and numbers.
+    // The bar's monospace (fc-match monospace), used for the wordmark, the caps labels and numbers.
     readonly property string fontMono: "JetBrainsMono Nerd Font"
     readonly property string fontUi: "Poppins"
+    readonly property string fontUiLight: "Poppins Light"     // Light-only family: "Poppins" + Font.Light falls back to Regular
+    // Headings and big numbers; the small caps labels (the wordmark, panel headers, chips) stay monospace.
+    readonly property string fontDisplay: fontUi
+    readonly property string fontLabel: fontMono
+    function labelWeight(w) {
+        return w;
+    }
 
     // ── geometry ──
     readonly property int barTop: 12          // the Noctalia bar row: y 12–46
@@ -136,15 +183,33 @@ Singleton {
 
     // ── fullscreen HUD (section 9) ──
     readonly property color secondary: pick("secondary", null, "textMuted")
-    readonly property string fontUiLight: "Poppins Light"     // Light-only family: "Poppins" + Font.Light falls back to Regular
     readonly property int hudMargin: 40
     readonly property int hudGutter: 28
     readonly property int hudPad: 14
     readonly property int hudBracket: 12
+    readonly property bool hudWallpaper: true                 // the blurred wallpaper under the HUD's tint
     readonly property real hudBackdrop: 0.86                  // hudTint over the blurred wallpaper
     readonly property color hudTint: mix(bg, primary, 0.07)   // the HUD's deep tone: bg leaning into the accent
     readonly property real hudGrid: 0.03
     readonly property int animHud: 350                        // orb → core flight, panel slide
     readonly property int hudStagger: 40
     readonly property color hudShade: Qt.darker(bg, 2.2)      // vignette edge
+    // The signature gradient, start → middle → end: the wallpaper's accent ramp (deep → accent → bright).
+    readonly property color grad0: primaryDeep
+    readonly property color grad1: primary
+    readonly property color grad2: primaryBright
+    // v2 glass cards: a translucent fill lighter at the top, a gradient hairline, generous radius (square mode: 0).
+    readonly property real hudCardRadius: 14 * round
+    readonly property color hudCardTop: mix(surfaceRaised, grad1, 0.06)
+    readonly property color hudCardBottom: mix(surface, bg, 0.4)
+    readonly property real hudCardAlpha: 0.42
+    readonly property real hudCardBorder: 0.32                // base strength of the gradient hairline
+    readonly property color hudGround: hudTint
+    readonly property color hudDot: mix(text, grad2, 0.35)
+    readonly property int hudOpenMs: 620                      // backdrop reveal out of the pill
+    readonly property int hudCloseMs: 380
+    readonly property int hudStaggerV2: 55
+    // Parts waiting for the HUD's entrance sit at this opacity, not 0: invisible, but still rendered, so the
+    // first (hidden) frame already uploads their glyphs and builds their pipelines and the entrance never hitches.
+    readonly property real hudGhost: 0.002
 }

@@ -360,10 +360,24 @@ class BriefingConfig:
 
 @dataclass(frozen=True)
 class ShowcaseConfig:
-    """Section 24: "Jarvis, present yourself" runs a scripted demonstration (jarvis/integrations/showcase.py)."""
+    """ "Jarvis, present yourself": section 25's cinematic showcase (jarvis/showcase/), or section 24's editable script
+    (jarvis/integrations/showcase.py) with style = "script"."""
     enabled: bool = True
+    style: str = "cinematic"            # "cinematic" (section 25) | "script" (section 24, ~/.config/jarvis/showcase.toml)
+    mute: bool = False                  # true: the lines aren't spoken (the steps still run, at the speech's pace)
+    # section 24 (style = "script")
     script: str = ""                    # "" = ~/.config/jarvis/showcase.toml (the repo default, copied on first use)
-    mute: bool = False                  # true: the lines aren't spoken (silent dry runs; the steps still run)
+    # section 25 (style = "cinematic")
+    terminal: str = ""                  # "" = [desktop] terminal (ghostty), then kitty, alacritty, foot, …
+    browser: str = ""                   # "" = the default browser (Zen); its own profile, closed afterwards
+    fresh_workspace: bool = True        # each window scene on an empty workspace, then back to yours
+    workspace_settle_s: float = -1.0    # after a switch, for its animation (-1 = Hyprland's `workspaces` animation)
+    takeover: bool = True               # any real key, click, wheel or mouse move stops it (needs the input group)
+    takeover_grace_s: float = 2.0       # input in the first seconds doesn't count (the menu click)
+    takeover_mouse_px: int = 60         # real mouse motion within 0.5 s that counts as taking over
+    close_grace_s: float = 3.0          # SIGTERM, then SIGKILL after this, for the showcase's own windows
+    scroll: bool = True                 # the web scene glides down the page and switches to its second tab
+    code_cps: float = 150.0             # live coding: characters a second (the script's `cps` wins)
 
 
 @dataclass(frozen=True)

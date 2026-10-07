@@ -472,6 +472,7 @@ def test_no_trigger_for_other_sentences_or_external_content(text: str) -> None:
 def _cfg(**kw: Any) -> Any:
     from jarvis.config import ShowcaseConfig
 
+    kw.setdefault("style", "script")  # section 25 made the cinematic showcase the default; these test section 24's
     return ShowcaseConfig(**kw)
 
 

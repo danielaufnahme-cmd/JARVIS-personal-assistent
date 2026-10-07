@@ -19,10 +19,26 @@ PanelWindow {
         top: true
         left: true
     }
+    // Section 25: during the showcase the pill travels across the screen (PillTravel moves these margins, eased,
+    // ~60 fps) and comes back to this corner at the end.
     margins {
-        top: Theme.barTop
-        left: Theme.pillLeft
+        top: travel.posY
+        left: travel.posX
     }
+    PillTravel {
+        id: travel
+        ipc: win.ipc
+        homeX: Theme.pillLeft
+        homeY: Theme.barTop
+        // the whole surface stays on the screen (it is wider than the pill; the rest is click-through)
+        areaW: (win.screen ? win.screen.width : 2560) - Theme.pillMaxWidth
+        areaH: (win.screen ? win.screen.height : 1440) - Theme.pillHeight
+    }
+    // The showcase's small cores and its choreography (ShowcaseCores.qml) keep clear of the pill's route and launch
+    // from its orb.
+    readonly property alias showcaseTravel: travel
+    readonly property real pillOffsetX: pill.x
+    readonly property real pillWidth: pill.width
     // Fixed width so the pill can grow inside it without the surface being reconfigured every
     // frame; the mask keeps the empty part click-through. 24 + 460 = 484 < 520.
     implicitWidth: Theme.pillMaxWidth
@@ -35,7 +51,7 @@ PanelWindow {
     // Not monitorFor(screen): hiding the window changes `screen`, which re-triggers this binding (a loop).
     readonly property bool fullscreenBelow: Hyprland.focusedMonitor?.activeWorkspace?.hasFullscreen ?? false
     readonly property bool jarvisActive: ipc.sessionActive || ipc.mode !== "idle" || ipc.draft !== null
-        || ipc.hudOpen || alertBubble.shown
+        || ipc.hudOpen || alertBubble.shown || ipc.showcaseActive || travel.away
     visible: !fullscreenBelow || jarvisActive
 
     readonly property bool online: ipc.connected
@@ -102,8 +118,8 @@ PanelWindow {
             return "";
         if (ipc.inControl)
             return "IN CONTROL";  // section 19: JARVIS drives the mouse and keyboard (say "stop", Esc or move the mouse)
-        if (ipc.showcase)
-            return "SHOWCASE";    // section 24: "present yourself" (in the accent colour; stop: "stop", Esc, the mouse)
+        if (ipc.showcaseActive)
+            return "SHOWCASE";    // sections 24/25: "present yourself" (stop: say "stop", click the orb, Esc or the mouse)
         switch (mode) {
         case "waking": return ipc.model.loading ? "LOADING" : "WAKING";
         case "listening": return "LISTENING";
@@ -154,6 +170,10 @@ PanelWindow {
         function onEvent(msg) {
             if (msg.ev === "deep" && msg.done)
                 orb.pulseOnce();   // section 10: the deep answer is complete
+            // section 25: the orb winks when the showcase moves on to a new scene or a demo is done
+            else if ((msg.ev === "showcase.step" && Number(msg.index || 0) >= 2)
+                     || (msg.ev === "showcase.beat" && msg.kind === "done"))
+                orb.pulseOnce();
         }
     }
 
@@ -266,7 +286,10 @@ PanelWindow {
                     x: 6 - (width - size) / 2
                     anchors.verticalCenter: parent.verticalCenter
                     mode: win.mode
-                    level: win.ipc.level
+                    // lean mode, HUD open: the HUD covers the pill; the orb's breathing and level spring would make the
+                    // HUD redraw with every tick, so the orb holds still until the HUD closes
+                    paused: Theme.lean && win.ipc.hudOpen
+                    level: orb.paused ? 0 : win.ipc.level
                     connected: win.online
                     loaded: win.ipc.model.loaded
                     loading: win.ipc.model.loading
@@ -314,7 +337,7 @@ PanelWindow {
                     Rectangle {
                         x: 5
                         anchors.verticalCenter: parent.verticalCenter
-                        width: 3; height: 3; radius: 1.5
+                        width: 3; height: 3; radius: 1.5 * Theme.round
                         color: win.accent
                         opacity: 0.8
                     }
@@ -656,7 +679,7 @@ PanelWindow {
                 Rectangle {
                     width: 14
                     height: 14
-                    radius: 7
+                    radius: 7 * Theme.round
                     anchors.verticalCenter: parent.verticalCenter
                     x: parent.width * win.ipc.voiceVolume - width / 2
                     color: Theme.primaryPale
@@ -765,6 +788,9 @@ PanelWindow {
                         { label: "Lower other audio while active", enabled: win.ipc.connected, checkable: true,
                           checked: win.ipc.duckEnabled, msg: { cmd: "voice.duck.set", enabled: !win.ipc.duckEnabled } },
                         { label: "Open HUD", cmd: "hud.open", enabled: !win.ipc.hudOpen },
+                        // "present yourself" on demand (section 25)
+                        { label: win.ipc.showcaseActive ? "Stop showcase" : "Showcase", enabled: win.ipc.connected,
+                          msg: win.ipc.showcaseActive ? { cmd: "showcase.stop" } : { cmd: "showcase.start", via: "menu" } },
                         { label: "Daily briefing", enabled: win.ipc.connected && win.briefing !== "", checkable: true,
                           checked: win.briefing === "on", msg: { cmd: "briefing.set", enabled: win.briefing !== "on" } },
                         { label: "Brain: Fast", enabled: win.ipc.connected && win.brain !== "", checkable: true,

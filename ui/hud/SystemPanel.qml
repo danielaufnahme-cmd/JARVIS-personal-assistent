@@ -1,3 +1,5 @@
+pragma ComponentBehavior: Bound
+
 import QtQuick
 import qs
 import "fmt.js" as F
@@ -18,6 +20,7 @@ HudPanel {
     readonly property bool anyLoaded: !!models && ((!!models.fast && models.fast.loaded) || (!!models.smart && models.smart.loaded))
 
     index: "06"
+    icon: "\uf2db"
     label: "SYSTEM · MODEL"
     k: view.k
     active: online && (m.loaded || m.loading)
@@ -59,20 +62,20 @@ HudPanel {
                 anchors.verticalCenter: mdot.verticalCenter
                 text: "MODEL"
                 color: Theme.textMuted
-                font.family: Theme.fontMono
-                font.pixelSize: Math.round(10 * p.k)
-                font.letterSpacing: 1.6
+                font.family: Theme.fontLabel
+                font.pixelSize: Math.round(9.5 * p.k)
+                font.letterSpacing: 1.8
             }
             Text {
                 anchors.left: mlabel.right
                 anchors.leftMargin: 8
                 anchors.verticalCenter: mdot.verticalCenter
                 text: p.modelState === "LOADING" ? "LOADING…" : p.modelState
-                color: p.modelState === "LOADED" ? Theme.primary : p.modelState === "LOADING" ? Theme.warn : Theme.text
-                font.family: Theme.fontMono
-                font.pixelSize: Math.round(12 * p.k)
-                font.weight: Font.Bold
-                font.letterSpacing: 1.6
+                color: p.modelState === "LOADED" ? Theme.primaryBright : p.modelState === "LOADING" ? Theme.warn : Theme.text
+                font.family: Theme.fontLabel
+                font.pixelSize: Math.round(11.5 * p.k)
+                font.weight: Theme.labelWeight(Font.DemiBold)
+                font.letterSpacing: 1.8
             }
             Text {
                 anchors.left: mlabel.left
@@ -96,8 +99,9 @@ HudPanel {
                 }
                 elide: Text.ElideRight
                 color: Theme.textMuted
-                font.family: Theme.fontMono
-                font.pixelSize: Math.round(11.5 * p.k)
+                font.family: Theme.fontUi
+                font.pixelSize: Math.round(12 * p.k)
+                font.features: { "tnum": 1 }
             }
             HudButton {
                 id: unloadBtn
@@ -262,7 +266,7 @@ HudPanel {
         Rectangle {
             width: parent.width
             height: 1
-            color: Theme.alpha(Theme.outline, 0.8)
+            color: Theme.alpha(Theme.outline, 0.45)
         }
 
         Text {
@@ -283,6 +287,7 @@ HudPanel {
             property real frac: -1
             property real part: -1
             property bool hot: false
+            property bool armed: true
             property real kk: 1
             height: Math.round(22 * metric.kk)
             Text {
@@ -291,9 +296,9 @@ HudPanel {
                 anchors.verticalCenter: parent.verticalCenter
                 text: metric.name
                 color: Theme.textMuted
-                font.family: Theme.fontMono
-                font.pixelSize: Math.round(10 * metric.kk)
-                font.letterSpacing: 1.4
+                font.family: Theme.fontLabel
+                font.pixelSize: Math.round(9.5 * metric.kk)
+                font.letterSpacing: 1.8
             }
             Text {
                 id: mv
@@ -302,8 +307,9 @@ HudPanel {
                 width: Math.round(128 * metric.kk)
                 text: metric.value
                 color: metric.hot ? Theme.warn : Theme.text
-                font.family: Theme.fontMono
-                font.pixelSize: Math.round(12.5 * metric.kk)
+                font.family: Theme.fontUi
+                font.pixelSize: Math.round(13 * metric.kk)
+                font.features: { "tnum": 1 }
             }
             Meter {
                 visible: metric.frac >= 0
@@ -314,6 +320,7 @@ HudPanel {
                 value: metric.frac
                 part: metric.part
                 hot: metric.hot
+                armed: metric.armed
             }
             Text {
                 visible: metric.frac < 0 && metric.note !== ""
@@ -330,6 +337,186 @@ HudPanel {
             }
         }
 
+        // A number that counts up to its value when it appears and glides between samples.
+        component CountUp: Text {
+            id: cu
+            property real value: 0
+            property int decimals: 0
+            property string suffix: ""
+            property bool armed: true
+            property real shownV: 0
+            Component.onCompleted: {
+                shownV = Qt.binding(() => cu.armed ? cu.value : 0);
+                if (cu.armed)
+                    settle.restart();
+            }
+            // lean mode (Theme.lean): it counts up when the panel lands, then (`steady`) snaps to each
+            // new sample: a glide every second kept the whole HUD redrawing at the monitor's 240 Hz.
+            property bool steady: false
+            onArmedChanged: {
+                steady = false;
+                if (armed)
+                    settle.restart();
+            }
+            Timer {
+                id: settle
+                interval: 850
+                onTriggered: cu.steady = cu.armed
+            }
+            Behavior on shownV {
+                enabled: !(Theme.lean && cu.steady)
+                NumberAnimation { duration: Theme.reduceMotion ? 0 : 750; easing.type: Easing.OutCubic }
+            }
+            text: shownV.toFixed(decimals) + suffix
+            font.features: { "tnum": 1 }
+        }
+
+        // ── VRAM gauge + CPU / GPU sparklines (the last minute) ──
+        Item {
+            id: gauges
+            visible: p.s !== null
+            width: parent.width
+            height: Math.round(104 * p.k)
+            readonly property real vUsed: F.num(p.s ? p.s.vram_used_mb : null) ?? 0
+            readonly property real vTotal: F.num(p.s ? p.s.vram_total_mb : null) ?? 0
+            readonly property bool hasV: vTotal > 0
+            readonly property real cpu: F.num(p.s ? p.s.cpu_pct : null) ?? 0
+            readonly property real gu: F.num(p.s ? p.s.gpu_util_pct : null) ?? -1
+            readonly property real gt: F.num(p.s ? p.s.gpu_temp_c : null) ?? -1
+
+            Item {
+                id: vram
+                visible: gauges.hasV
+                width: gauges.hasV ? Math.round(100 * p.k) : 0
+                height: parent.height
+                GradientArc {
+                    id: varc
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    width: Math.round(100 * p.k)
+                    height: width
+                    thickness: Math.max(4, 5 * p.k)
+                    value: gauges.hasV ? gauges.vUsed / gauges.vTotal : 0
+                    armed: p.settled
+                    from: gauges.vUsed / Math.max(1, gauges.vTotal) >= 0.95 ? Theme.warnDeep : Theme.grad0
+                    to: gauges.vUsed / Math.max(1, gauges.vTotal) >= 0.95 ? Theme.warn : Theme.grad2
+                }
+                Column {
+                    anchors.centerIn: varc
+                    anchors.verticalCenterOffset: Math.round(2 * p.k)
+                    spacing: 0
+                    CountUp {
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        armed: p.settled
+                        value: gauges.vUsed / 1024
+                        decimals: 1
+                        color: Theme.text
+                        font.family: Theme.fontUiLight
+                        font.weight: Font.Light
+                        font.pixelSize: Math.round(22 * p.k)
+                    }
+                    Text {
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        text: "OF " + Math.round(gauges.vTotal / 1024) + " GB"
+                        color: Theme.textMuted
+                        font.family: Theme.fontLabel
+                        font.pixelSize: Math.round(8.5 * p.k)
+                        font.letterSpacing: 1.2
+                    }
+                }
+                Text {
+                    anchors.horizontalCenter: varc.horizontalCenter
+                    y: varc.y + varc.height - Math.round(16 * p.k)
+                    text: "VRAM"
+                    color: Theme.primary
+                    font.family: Theme.fontLabel
+                    font.pixelSize: Math.round(9.5 * p.k)
+                    font.weight: Theme.labelWeight(Font.DemiBold)
+                    font.letterSpacing: 2
+                }
+            }
+
+            Column {
+                anchors.left: vram.right
+                anchors.leftMargin: gauges.hasV ? Math.round(18 * p.k) : 0
+                anchors.right: parent.right
+                anchors.verticalCenter: parent.verticalCenter
+                spacing: Math.round(10 * p.k)
+
+                component Spark: Item {
+                    id: spk
+                    property string name: ""
+                    property real value: 0
+                    property string extra: ""
+                    property var hist: []
+                    property bool hot: false
+                    property bool armed: true
+                    property real kk: 1
+                    width: parent ? parent.width : 0
+                    height: Math.round(44 * kk)
+                    Text {
+                        id: sn
+                        text: spk.name
+                        color: Theme.textMuted
+                        font.family: Theme.fontLabel
+                        font.pixelSize: Math.round(9.5 * spk.kk)
+                        font.letterSpacing: 1.8
+                    }
+                    Row {
+                        anchors.right: parent.right
+                        anchors.verticalCenter: sn.verticalCenter
+                        spacing: Math.round(8 * spk.kk)
+                        Text {
+                            anchors.baseline: spv.baseline
+                            visible: spk.extra !== ""
+                            text: spk.extra
+                            color: Theme.textMuted
+                            font.family: Theme.fontUi
+                            font.pixelSize: Math.round(11 * spk.kk)
+                            font.features: { "tnum": 1 }
+                        }
+                        CountUp {
+                            id: spv
+                            armed: spk.armed
+                            value: spk.value
+                            suffix: " %"
+                            color: spk.hot ? Theme.warn : Theme.text
+                            font.family: Theme.fontUi
+                            font.pixelSize: Math.round(15 * spk.kk)
+                            font.weight: Font.Medium
+                        }
+                    }
+                    Sparkline {
+                        anchors.left: parent.left
+                        anchors.right: parent.right
+                        anchors.bottom: parent.bottom
+                        height: Math.round(24 * spk.kk)
+                        values: spk.hist
+                        hot: spk.hot
+                        // Auto-scaled (at least 0–25 %), so a quiet minute still shows its shape.
+                        max: Math.max(25, Math.max.apply(null, (spk.hist || []).concat([0])) * 1.25)
+                    }
+                }
+                Spark {
+                    kk: p.k
+                    armed: p.settled
+                    name: "CPU"
+                    value: gauges.cpu
+                    hist: p.view.store.sysHist.cpu
+                    hot: gauges.cpu >= 85
+                }
+                Spark {
+                    kk: p.k
+                    armed: p.settled
+                    visible: gauges.gu >= 0 || gauges.gt >= 0
+                    name: "GPU"
+                    value: Math.max(0, gauges.gu)
+                    extra: gauges.gt >= 0 ? Math.round(gauges.gt) + " °C" : ""
+                    hist: p.view.store.sysHist.gpu
+                    hot: gauges.gt >= 80
+                }
+            }
+        }
+
         Column {
             visible: p.s !== null
             width: parent.width
@@ -338,15 +525,7 @@ HudPanel {
             Metric {
                 width: parent.width
                 kk: p.k
-                readonly property real v: F.num(p.s ? p.s.cpu_pct : null) ?? 0
-                name: "CPU"
-                value: Math.round(v) + " %"
-                frac: v / 100
-                hot: v >= 85
-            }
-            Metric {
-                width: parent.width
-                kk: p.k
+                armed: p.settled
                 readonly property real used: F.num(p.s ? p.s.ram_used_mb : null) ?? 0
                 readonly property real total: F.num(p.s ? p.s.ram_total_mb : null) ?? 1
                 readonly property real model: F.num(p.s ? p.s.model_rss_mb : null) ?? 0
@@ -363,30 +542,8 @@ HudPanel {
                 textFormat: Text.PlainText
                 color: Theme.textMuted
                 opacity: 0.8
-                font.family: Theme.fontMono
+                font.family: Theme.fontUi
                 font.pixelSize: Math.round(10.5 * p.k)
-            }
-            Metric {
-                width: parent.width
-                kk: p.k
-                visible: p.s !== null && F.num(p.s.vram_total_mb) !== null
-                readonly property real used: F.num(p.s ? p.s.vram_used_mb : null) ?? 0
-                readonly property real total: F.num(p.s ? p.s.vram_total_mb : null) ?? 1
-                name: "VRAM"
-                value: F.gb(used) + " / " + F.gb(total, 0) + " GB"
-                frac: used / total
-                hot: used / total >= 0.95
-            }
-            Metric {
-                width: parent.width
-                kk: p.k
-                visible: p.s !== null && (F.num(p.s.gpu_temp_c) !== null || F.num(p.s.gpu_util_pct) !== null)
-                readonly property real t: F.num(p.s ? p.s.gpu_temp_c : null) ?? -1
-                readonly property real u: F.num(p.s ? p.s.gpu_util_pct : null) ?? -1
-                name: "GPU"
-                value: (t >= 0 ? Math.round(t) + " °C" : "—") + (u >= 0 ? "  " + Math.round(u) + " %" : "")
-                frac: u >= 0 ? u / 100 : -1
-                hot: t >= 80
             }
             Metric {
                 width: parent.width

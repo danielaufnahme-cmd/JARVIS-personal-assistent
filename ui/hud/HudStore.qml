@@ -18,6 +18,31 @@ QtObject {
     property bool deepDone: true
     property real deepAt: 0
     readonly property int maxEntries: 8  // 4 exchanges
+    // The last minute of system samples (one a second while the HUD is open) for the ⑥ sparklines:
+    // { cpu: [0..100], gpu: [0..100], vram: [0..1] }, oldest first.
+    property var sysHist: ({ cpu: [], gpu: [], vram: [] })
+    property double _sysTs: -1
+    readonly property int histLen: 60
+
+    function _pushSystem(s) {
+        if (!s || typeof s !== "object")
+            return;
+        const ts = Number(s.ts);
+        if (!isNaN(ts) && ts === store._sysTs)
+            return;
+        store._sysTs = isNaN(ts) ? -1 : ts;
+        const n = v => {
+            const x = Number(v);
+            return v === null || v === undefined || isNaN(x) ? null : x;
+        };
+        const add = (arr, v) => v === null ? arr : arr.slice(-(store.histLen - 1)).concat([v]);
+        const vt = n(s.vram_total_mb), vu = n(s.vram_used_mb);
+        store.sysHist = {
+            cpu: add(store.sysHist.cpu, n(s.cpu_pct)),
+            gpu: add(store.sysHist.gpu, n(s.gpu_util_pct)),
+            vram: add(store.sysHist.vram, vt && vu !== null ? vu / vt : null)
+        };
+    }
 
     function _mergeWidgets(fields) {
         const next = Object.assign({}, store.widgets);
@@ -25,6 +50,8 @@ QtObject {
             if (k !== "ev")
                 next[k] = fields[k];
         store.widgets = next;
+        if (fields.system)
+            store._pushSystem(fields.system);
     }
 
     function _push(role, text) {

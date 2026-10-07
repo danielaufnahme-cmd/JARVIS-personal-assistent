@@ -72,7 +72,9 @@ class Daemon:
         self.model = ModelStatus(self.bus, self.llm, idle_unload=True, stt=self._question_stt)
         self.session = Session(self.bus, cfg, warm_up=self.model.warm_up)
         self.model.session = self.session
-        self.model.holds.append(lambda: self._computer()["active"])  # never unload the voice model mid computer_task
+        # The voice model never leaves the GPU mid computer_task or mid showcase (its lines go out as replies).
+        self.model.holds.append(lambda: self._computer()["active"])
+        self.model.holds.append(lambda: self._showcase()["active"])
         self.session.on_hud_open = self.model.prewarm  # section 20: SUPER+J / the HUD starts the voice model load
         self.llm.on_unload.append(self._park_stt)  # "go to sleep" / "Unload now" free the Whisper VRAM too
         # Real Gmail sender once `jarvisctl setup email` has run (messaging was removed in section 19).
@@ -101,7 +103,7 @@ class Daemon:
             "widgets": self._widgets(),
             "job": self._job(),  # section 15: the running (or last) coding job, same shape as the `job` event
             "computer": self._computer(),  # section 19: {"active", "goal"} while JARVIS drives mouse/keyboard
-            "showcase": {"active": self._showcase_running()},  # section 24: "present yourself" is running
+            "showcase": self._showcase(),  # sections 24/25: {"active", "lang"} while "present yourself" runs
             # section 13: another app (dictation, a call) records the mic, so JARVIS isn't listening
             "mic_busy": ({k: v for k, v in self.voice.mic_busy_status().items() if k in ("busy", "apps")}
                          if self.voice is not None else {"busy": False, "apps": []}),
@@ -150,10 +152,10 @@ class Daemon:
         return saved if saved in ("fast", "smart") else None
 
     @staticmethod
-    def _showcase_running() -> bool:
-        from .integrations.showcase import SHOWCASE
+    def _showcase() -> dict[str, Any]:
+        from .showcase import any_running, running_lang
 
-        return SHOWCASE.running
+        return {"active": any_running(), "lang": running_lang()}
 
     @staticmethod
     def _computer() -> dict[str, Any]:
@@ -164,6 +166,91 @@ class Daemon:
     def _brain_info(self) -> dict[str, Any]:
         info = self.llm.describe() if hasattr(self.llm, "describe") else {"brain": "smart"}
         return {k: v for k, v in info.items() if k != "fallbacks"}
+
+    # --- section 25: the cinematic showcase -------------------------------------------------------------------------
+
+    async def start_showcase(self, cmd: dict[str, Any]) -> dict[str, Any]:
+        """`showcase.start {"dry_run"?, "via"?}`: from the session's fast path and the `showcase` tool, jarvisctl and
+        the pill menu. A dry run runs nothing and returns the timeline. `[showcase] style = "script"` starts section
+        24's script showcase instead."""
+        from .integrations.computer import CONTROL
+        from .showcase import SHOWCASE, any_running, build
+        from .showcase.trigger import take_encore
+
+        sc = self.cfg.showcase
+        if not sc.enabled:
+            raise RuntimeError("the showcase is turned off ([showcase] enabled = false)")
+        if cmd.get("dry_run"):
+            result = await build(self.cfg, "en", dry_run=True).run()
+            return {"dry_run": True, **result.as_dict(), "timeline": result.timeline}
+        if any_running():
+            raise RuntimeError("the showcase is already running")
+        if CONTROL.running:
+            raise RuntimeError("a computer task is running; say stop first")
+        if sc.style == "script":
+            from .tools.showcase import begin
+
+            started = await begin(self.tools.ctx, "en")
+            if not started.get("ok"):
+                raise RuntimeError(str(started.get("error") or "the showcase didn't start"))
+            return {"started": True, "lang": "en", "style": "script"}
+        encore = take_encore()   # "Jarvis, again" right after one: the finale alone
+        if self.voice is not None and hasattr(self.voice, "showcase_lines"):
+            self.voice.showcase_lines()
+        showcase = build(self.cfg, "en", speak=self._showcase_speak, hush=self._showcase_hush, emit=self.bus.emit,
+                         hud=self._showcase_hud, encore=encore)
+        SHOWCASE.start(showcase)
+        log.info("showcase started (via %s%s)", cmd.get("via") or "command",
+                 ", the encore: the finale" if encore else "")
+        return {"started": True, "lang": showcase.lang}
+
+    async def _showcase_speak(self, text: str, lang: str) -> None:
+        """One line: a `reply` like any answer (the voice speaks it, the HUD shows it), then until it has been said.
+        Muted, or no voice: the line's own time instead, so the demo keeps its pace."""
+        from .showcase import speech_seconds
+
+        estimate = speech_seconds(text) + 0.4
+        voice = self.voice
+        if self.cfg.showcase.mute or voice is None or not getattr(voice, "ready", False) \
+                or getattr(getattr(voice, "volume", None), "muted", False):
+            if not self.cfg.showcase.mute:
+                self.bus.emit("reply", delta=text + " ")   # still on screen (the HUD, the caption)
+            await asyncio.sleep(estimate)
+            return
+        if hasattr(voice, "showcase_lines"):
+            voice.showcase_lines()
+        loop = asyncio.get_running_loop()
+        said_at = loop.time()
+        self.bus.emit("reply", delta=text + " ")
+        speaking = self.session.is_speaking
+        # TTS needs a moment to start (the reply reaches the voice pipeline, the first chunk is synthesised).
+        while not speaking() and loop.time() < said_at + 4.0:
+            await asyncio.sleep(0.05)
+        if not speaking():  # never started: keep the line's own timing
+            await asyncio.sleep(max(0.0, said_at + estimate - loop.time()))
+            return
+        limit = said_at + max(8.0, 2.5 * estimate + 4.0)
+        quiet_since = None
+        while loop.time() < limit:
+            if speaking():
+                quiet_since = None
+            elif quiet_since is None:
+                quiet_since = loop.time()
+            elif loop.time() - quiet_since >= 0.25:  # the queue can be empty between sentences
+                return
+            await asyncio.sleep(0.05)
+
+    def _showcase_hush(self) -> None:
+        try:
+            result = self.session.on_stop_speaking()
+            if asyncio.iscoroutine(result):
+                self._spawn(result, "showcase-hush")
+        except Exception:  # noqa: BLE001
+            log.exception("silencing the showcase failed")
+
+    async def _showcase_hud(self, open_: bool) -> None:
+        if self.session.hud_open != open_:
+            self.session.set_hud(open_)
 
     def register_commands(self) -> None:
         bus = self.bus
@@ -227,6 +314,11 @@ class Daemon:
                 self.model.gpu_mode_changed()
             return self._brain_info()
 
+        async def showcase_stop(_: dict[str, Any]) -> dict[str, Any]:
+            from .showcase import stop_any
+
+            return {"stopped": stop_any("command")}
+
         async def computer_stop(_: dict[str, Any]) -> dict[str, Any]:
             from .integrations.computer import CONTROL
 
@@ -234,6 +326,8 @@ class Daemon:
 
         bus.handle("say", say)
         bus.handle("computer.stop", computer_stop)
+        bus.handle("showcase.start", self.start_showcase)
+        bus.handle("showcase.stop", showcase_stop)
         bus.handle("model.unload", unload)
         bus.handle("ping", ping)
         bus.handle("llm.brain.set", brain_set)
@@ -336,6 +430,13 @@ class Daemon:
         from . import hud_guard
 
         hud_guard.configure(None, lambda: False)
+        from .showcase import SHOWCASE, stop_any
+
+        if stop_any("shutdown") and SHOWCASE.task is not None:
+            try:  # its windows close (and the user's workspace comes back) before jarvisd goes
+                await asyncio.wait_for(asyncio.shield(SHOWCASE.task), timeout=8)
+            except Exception:  # noqa: BLE001
+                log.exception("closing the showcase failed")
         if self.voice is not None:
             try:
                 await asyncio.wait_for(self.voice.close(), timeout=5)

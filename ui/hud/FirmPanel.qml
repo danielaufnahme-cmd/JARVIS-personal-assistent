@@ -1,10 +1,13 @@
+pragma ComponentBehavior: Bound
+
 import QtQuick
 import qs
 import "fmt.js" as F
 
-// ⑨ Firm (section 18): Geonix Wrench's numbers from `widgets.firm` — monthly earnings (large), total earned,
-// subscribers (individual / shops · seats), job cards (PDFs: total, last 7 days), signups, and "as of hh:mm"
-// (amber "STALE" when the last refresh failed). Click = JARVIS says the firm update; ⟳ = refetch now.
+// ⑨ Firm (section 18): Geonix Wrench's numbers from `widgets.firm` — monthly earnings (large, counting up when the
+// card lands, with the recent months as a sparkline), total earned, subscribers (individual / shops · seats), job
+// cards (PDFs: total, last 7 days), signups, and "as of hh:mm" (amber "STALE" when the last refresh failed).
+// Click = JARVIS says the firm update; ⟳ = refetch now.
 // Not connected / off / failing: an empty state with the setup hint. All numbers, no provider text.
 HudPanel {
     id: p
@@ -34,6 +37,7 @@ HudPanel {
     }
 
     index: "09"
+    icon: ""
     label: "FIRM · GEONIX"
     k: view.k
     active: hasData && !stale
@@ -48,14 +52,14 @@ HudPanel {
                 : p.status === "not_configured" ? "NOT CONNECTED" : p.status === "disabled" ? "OFF"
                 : p.status === "error" ? "UNAVAILABLE" : ""
             color: p.stale || p.status === "error" ? Theme.warn : Theme.textMuted
-            font.family: Theme.fontMono
-            font.pixelSize: Math.round(10 * p.k)
-            font.letterSpacing: 1.4
+            font.family: Theme.fontLabel
+            font.pixelSize: Math.round(9.5 * p.k)
+            font.letterSpacing: 1.6
         },
         HudButton {
             visible: p.status === "ok" || p.status === "error"
             k: p.k
-            glyph: ""
+            glyph: ""
             onClicked: p.view.send({ cmd: "firm.refresh" })
         }
     ]
@@ -65,7 +69,7 @@ HudPanel {
         width: parent.width
         visible: !p.hasData
         k: p.k
-        glyph: ""
+        glyph: ""
         warn: p.status === "error"
         title: p.status === "not_configured" ? "Geonix Wrench isn't connected"
              : p.status === "disabled" ? "The firm tracker is off"
@@ -78,7 +82,7 @@ HudPanel {
         id: grid
         visible: p.hasData
         width: parent.width
-        height: Math.round(78 * p.k)
+        height: Math.round(84 * p.k)
 
         HoverHandler {
             id: hover
@@ -90,68 +94,57 @@ HudPanel {
         }
         Rectangle {
             anchors.fill: parent
-            anchors.margins: -Math.round(4 * p.k)
-            radius: 2 * Theme.round
-            color: Theme.alpha(Theme.text, hover.hovered ? 0.04 : 0)
+            anchors.margins: -Math.round(6 * p.k)
+            radius: Math.round(9 * p.k) * Theme.round
+            color: Theme.alpha(Theme.text, hover.hovered ? 0.05 : 0)
+            Behavior on color { ColorAnimation { duration: Theme.animFast } }
         }
 
-        // Left: this month (large), total earned under it, a 30-day sparkline of monthly earnings by the label.
+        // Left: this month (large, counting up as the card lands), total earned under it, the months as a sparkline.
         Item {
             id: left
-            width: Math.round(parent.width * 0.42)
+            width: Math.round(parent.width * 0.44)
             height: parent.height
 
-            Canvas {
-                id: spark
-                visible: p.hist.length >= 3
-                anchors.right: parent.right
-                anchors.rightMargin: Math.round(12 * p.k)
-                y: 0
-                width: Math.round(parent.width * 0.36)
-                height: Math.round(13 * p.k)
-                opacity: 0.7
-                property var pts: p.hist
-                property color tone: Theme.primary
-                onPtsChanged: requestPaint()
-                onToneChanged: requestPaint()
-                onPaint: {
-                    const ctx = getContext("2d");
-                    ctx.reset();
-                    const v = spark.pts;
-                    if (v.length < 2)
-                        return;
-                    const lo = Math.min.apply(null, v), hi = Math.max.apply(null, v);
-                    const span = hi - lo || 1;
-                    ctx.strokeStyle = spark.tone;
-                    ctx.lineWidth = 1.2;
-                    ctx.beginPath();
-                    for (let i = 0; i < v.length; i++) {
-                        const x = i * (width - 2) / (v.length - 1) + 1;
-                        const y = height - 2 - (v[i] - lo) / span * (height - 4);
-                        if (i === 0)
-                            ctx.moveTo(x, y);
-                        else
-                            ctx.lineTo(x, y);
-                    }
-                    ctx.stroke();
-                }
-            }
             Text {
                 id: monthLabel
                 text: "THIS MONTH"
                 color: Theme.textMuted
-                font.family: Theme.fontMono
-                font.pixelSize: Math.round(10 * p.k)
-                font.letterSpacing: 1.6
+                font.family: Theme.fontLabel
+                font.pixelSize: Math.round(9.5 * p.k)
+                font.letterSpacing: 1.8
+            }
+            Sparkline {
+                visible: p.hist.length >= 3
+                anchors.left: monthLabel.right
+                anchors.leftMargin: Math.round(10 * p.k)
+                anchors.right: parent.right
+                anchors.rightMargin: Math.round(12 * p.k)
+                anchors.verticalCenter: monthLabel.verticalCenter
+                height: Math.round(16 * p.k)
+                values: p.hist
+                capacity: Math.max(2, p.hist.length)
+                max: Math.max.apply(null, p.hist.concat([1])) * 1.15
+                opacity: 0.85
             }
             Text {
                 id: monthValue
                 anchors.top: monthLabel.bottom
                 anchors.topMargin: Math.round(2 * p.k)
-                text: p.money(p.f ? p.f.monthly_earnings : null)
+                // counts up from zero once the card has landed (instantly with reduce motion)
+                property real shown: 0
+                readonly property real target: p.settled ? (F.num(p.f ? p.f.monthly_earnings : null) ?? 0) : 0
+                onTargetChanged: shown = target
+                Behavior on shown {
+                    enabled: !Theme.reduceMotion
+                    NumberAnimation { duration: 900; easing.type: Easing.OutCubic }
+                }
+                text: p.f && F.num(p.f.monthly_earnings) !== null ? p.money(Math.round(shown)) : "—"
                 color: p.stale ? Theme.textMuted : Theme.text
                 font.family: Theme.fontUiLight
+                font.weight: Font.Light
                 font.pixelSize: Math.round(34 * p.k)
+                font.features: { "tnum": 1 }
             }
             Text {
                 anchors.top: monthValue.bottom
@@ -160,8 +153,9 @@ HudPanel {
                 elide: Text.ElideRight
                 text: (p.f && F.num(p.f.total_earned) !== null ? p.money(p.f.total_earned) : "—") + "  earned in total"
                 color: Theme.textMuted
-                font.family: Theme.fontMono
-                font.pixelSize: Math.round(11 * p.k)
+                font.family: Theme.fontUi
+                font.pixelSize: Math.round(11.5 * p.k)
+                font.features: { "tnum": 1 }
             }
         }
 
@@ -173,16 +167,16 @@ HudPanel {
             property string note: ""
             property real kk: 1
             width: parent ? parent.width : 0
-            height: Math.round(24 * kk)
+            height: Math.round(26 * kk)
             Text {
                 id: ln
-                width: Math.round(74 * line.kk)
+                width: Math.round(76 * line.kk)
                 anchors.verticalCenter: parent.verticalCenter
                 text: line.name
                 color: Theme.textMuted
-                font.family: Theme.fontMono
-                font.pixelSize: Math.round(10 * line.kk)
-                font.letterSpacing: 1.4
+                font.family: Theme.fontLabel
+                font.pixelSize: Math.round(9.5 * line.kk)
+                font.letterSpacing: 1.8
             }
             Text {
                 id: lv
@@ -190,8 +184,10 @@ HudPanel {
                 anchors.verticalCenter: parent.verticalCenter
                 text: line.value
                 color: Theme.text
-                font.family: Theme.fontMono
-                font.pixelSize: Math.round(13 * line.kk)
+                font.family: Theme.fontUi
+                font.pixelSize: Math.round(14 * line.kk)
+                font.weight: Font.Medium
+                font.features: { "tnum": 1 }
             }
             Text {
                 anchors.left: lv.right
@@ -201,12 +197,13 @@ HudPanel {
                 elide: Text.ElideRight
                 text: line.note
                 color: Theme.textMuted
-                font.family: Theme.fontMono
-                font.pixelSize: Math.round(10.5 * line.kk)
+                font.family: Theme.fontUi
+                font.pixelSize: Math.round(11 * line.kk)
+                font.features: { "tnum": 1 }
             }
         }
         Column {
-            x: left.width + Math.round(8 * p.k)
+            x: left.width + Math.round(10 * p.k)
             width: parent.width - x
             y: Math.round(2 * p.k)
             readonly property var s: p.f ? p.f.subscribers || ({}) : ({})

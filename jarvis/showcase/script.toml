@@ -1,0 +1,105 @@
+# The cinematic showcase ("Jarvis, present yourself"), section 25. Data, not code (jarvis/showcase/script.py loads
+# and checks it). Every step: a spoken line, one action, and a path the pill travels meanwhile. The next step starts
+# once the line has been said and the action is done; `hold_s` then leaves a little time to look.
+# Placeholders: {greeting} (good morning / afternoon / evening) and {address} ([persona] address, "sir").
+#
+# ~2 min, numbered scenes, each with a title card (`title`); the demo windows are framed by HUD brackets when they
+# appear, and the finale converges the cores into the JARVIS wordmark.
+#
+# Actions: hud_open, hud_close, ask (a question on a card, answered from the day JARVIS already knows: the weather,
+# reminders, timers, the calendar; `fallback` when there is nothing), terminal (`commands`, then `then`, typed in
+# JARVIS's own terminal), code (live coding: Neovim in JARVIS's own terminal types `program` into `file` and runs it;
+# `second` is said when it runs, `count` labels the line count), browser (`url`, then the `second_url` tab with its
+# `second` line), finish (the finale: `recap` words, the wordmark, `tagline`; closes anything still open; must be last).
+# An app that isn't installed: `missing` is said instead. The window scenes (terminal, code, browser) each get a fresh
+# empty workspace: JARVIS switches there, opens the window, waits until Hyprland shows it, narrates over it, keeps it
+# up at least `min_view_s`, then closes it and switches back ([showcase] fresh_workspace, jarvis/showcase/stage.py).
+# Path points: x/y from 0 to 1 over the screen area the pill can reach (0,0 = top left), ms = the trip's length.
+# Keep the lines free of the stop words ("stop", "wait", "enough", "quiet", "hold on", "moment", "one second", …):
+# the stop-word check listens while the showcase speaks.
+
+home_ms = 1300               # the pill's trip back to its corner at the end
+speech_chars_per_s = 14.0    # dry run: how long a spoken line takes
+
+[[step]]
+id = "intro"
+action = "hud_open"
+hold_s = 0.6
+say = "{greeting}, {address}. Allow me to introduce myself: I am JARVIS, your personal assistant. I live right here, on this machine, and I'd like to show you what I can do."
+
+[[step]]
+id = "about"
+action = "hud_close"
+hold_s = 0.5
+path = [{ x = 0.20, y = 0.30, ms = 1400 }, { x = 0.52, y = 0.18, ms = 1700 }, { x = 0.78, y = 0.26, ms = 1700 }]
+title = "All local"
+say = "Everything you are about to see runs on this computer. My ears, my voice and my mind all live on its own graphics card. Nothing goes to the cloud, and nothing leaves this desk."
+
+[[step]]
+id = "machine"
+action = "terminal"
+# Typed character by character in JARVIS's own terminal; the first installed one of each list runs.
+commands = ["fastfetch", "neofetch", "uname -a && lscpu | head"]
+then = ["nvidia-smi"]
+settle_s = 1.0
+type_s = 9.0
+min_view_s = 10.0
+hold_s = 2.2
+path = [{ x = 0.88, y = 0.04, ms = 1500 }, { x = 0.84, y = 0.05, ms = 2600 }]
+title = "This machine"
+say = "This is the machine I call home, {address}: the system itself, and the graphics card my models are loaded on."
+missing = "I run on this machine's own graphics card, {address}. No cloud required."
+
+[[step]]
+id = "coding"
+action = "code"
+program = "livecode_demo.py"   # jarvis/showcase/: the program typed live, then run
+file = "arc_reactor.py"        # its name in the editor (in the showcase's own folder, deleted afterwards)
+cps = 150.0                    # typing speed, characters a second (with a human jitter and a breath per line)
+run_s = 6.0                    # how long the program animates (its first argument)
+settle_s = 1.0
+type_s = 16.0                  # dry run: the typing (~1.4k characters at `cps`)
+min_view_s = 30.0
+hold_s = 2.0
+path = [{ x = 0.86, y = 0.03, ms = 1500 }, { x = 0.80, y = 0.04, ms = 3000 }, { x = 0.88, y = 0.03, ms = 3200 }]
+title = "Live coding"
+say = "Now, something I rather enjoy: live coding. I will write a small program from scratch, right in front of you, and then we shall see what it does."
+second = "Written, saved, and running. Rather fetching, if I say so myself."
+count = "lines of Python"
+missing = "I write code as well, {address}, though my editor isn't available just now."
+
+[[step]]
+id = "day"
+action = "ask"
+hold_s = 2.0
+path = [{ x = 0.50, y = 0.06, ms = 1700 }, { x = 0.40, y = 0.08, ms = 2600 }, { x = 0.58, y = 0.06, ms = 2800 }]
+title = "Your day"
+label = "Question"
+say = "I keep an eye on your day as well. You might simply ask me:"
+question = "What does my day look like?"
+fallback = "A clear day, {address}: no reminders, no timers, and nothing on the calendar."
+
+[[step]]
+id = "web"
+action = "browser"
+url = "https://en.wikipedia.org/wiki/J.A.R.V.I.S."
+second_url = "https://en.wikipedia.org/wiki/Iron_Man"   # a second tab; the tour switches to it for `second`
+pages = 2                    # Page Down glides on each page (one every 3 s): its top and what follows
+settle_s = 2.0
+min_view_s = 15.0
+hold_s = 1.6
+path = [{ x = 0.88, y = 0.03, ms = 1500 }, { x = 0.82, y = 0.04, ms = 3000 }]
+title = "On the web"
+say = "And the web, of course. Here is a page about my namesake, the original JARVIS."
+second = "And the gentleman who built him. I like to think he would approve."
+missing = "I can open anything on the web for you as well, {address}."
+
+[[step]]
+id = "outro"
+action = "finish"
+reveal_s = 2.4               # after the line: the cores converge, the light sweeps, the wordmark (UI timing)
+hold_s = 3.0                 # the name and the tagline on screen, then everything fades
+path = [{ x = 0.50, y = 0.07, ms = 1800 }]
+say = "Code, your desktop, the web and your day: I answer your questions, open what you need, write things for you and keep you on schedule."
+recap = "Code|Desktop|Web|Your day"
+tagline = "At your service, {address}. Just say my name."

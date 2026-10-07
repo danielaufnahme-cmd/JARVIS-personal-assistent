@@ -1,3 +1,5 @@
+pragma ComponentBehavior: Bound
+
 import QtQuick
 import qs
 import "fmt.js" as F
@@ -16,7 +18,20 @@ HudPanel {
     property bool showDays: false
 
     index: "04"
+    icon: "\uf017"
     label: "TIME · WEATHER"
+    // The seconds ring sweeps smoothly (every frame) unless motion is reduced; then it ticks once a second.
+    // lean mode (Theme.lean): it ticks once a second too: a sweep every frame kept the whole HUD
+    // redrawing at the monitor's refresh rate.
+    readonly property bool ticking: p.calm || Theme.lean
+    property real secFrac: 0
+    FrameAnimation {
+        running: !p.ticking && p.visible && p.view.settled
+        onTriggered: {
+            const d = new Date();
+            p.secFrac = (d.getSeconds() + d.getMilliseconds() / 1000) / 60;
+        }
+    }
     k: view.k
     implicitHeight: bodyItem.y + col.implicitHeight + pad
 
@@ -27,7 +42,7 @@ HudPanel {
             text: F.oneLine(p.w && p.w.location ? String(p.w.location).split(",")[0] : "").toUpperCase()
             textFormat: Text.PlainText
             color: Theme.textMuted
-            font.family: Theme.fontMono
+            font.family: Theme.fontLabel
             font.pixelSize: Math.round(10 * p.k)
             font.letterSpacing: 1.6
         },
@@ -55,27 +70,58 @@ HudPanel {
                 text: F.hhmm(p.view.now)
                 color: Theme.text
                 font.family: Theme.fontUiLight
-                font.pixelSize: Math.round(78 * p.k)
+                font.weight: Font.Light
+                font.pixelSize: Math.round(80 * p.k)
+                font.features: { "tnum": 1 }
                 lineHeightMode: Text.FixedHeight
-                lineHeight: Math.round(80 * p.k)
+                lineHeight: Math.round(82 * p.k)
             }
-            Text {
-                anchors.left: clock.right
-                anchors.leftMargin: Math.round(8 * p.k)
-                y: clock.y + Math.round(16 * p.k)
-                text: F.pad2(new Date(p.view.now).getSeconds())
-                color: Theme.primary
-                font.family: Theme.fontMono
-                font.pixelSize: Math.round(16 * p.k)
-                font.weight: Font.Medium
+            // Seconds: a gradient arc around the second count, sweeping continuously.
+            Item {
+                id: secRing
+                anchors.right: parent.right
+                y: clock.y + (clock.height - height) / 2 + Math.round(6 * p.k)
+                width: Math.round(76 * p.k)
+                height: width
+                GradientArc {
+                    anchors.fill: parent
+                    startDeg: 0
+                    span: 360
+                    thickness: Math.max(2.5, 3 * p.k)
+                    animated: false
+                    value: p.ticking ? new Date(p.view.now).getSeconds() / 60 : p.secFrac
+                    from: Theme.alpha(Theme.grad0, 0.9)
+                    to: Theme.grad2
+                    glow: 0.9
+                }
+                Text {
+                    anchors.centerIn: parent
+                    text: F.pad2(new Date(p.view.now).getSeconds())
+                    color: Theme.text
+                    font.family: Theme.fontUi
+                    font.pixelSize: Math.round(19 * p.k)
+                    font.weight: Font.Light
+                    font.features: { "tnum": 1 }
+                }
+                Text {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    anchors.top: parent.verticalCenter
+                    anchors.topMargin: Math.round(11 * p.k)
+                    text: "SEC"
+                    color: Theme.textMuted
+                    opacity: 0.6
+                    font.family: Theme.fontLabel
+                    font.pixelSize: Math.round(7.5 * p.k)
+                    font.letterSpacing: 1.4
+                }
             }
             Text {
                 id: date
                 anchors.top: clock.bottom
                 anchors.topMargin: Math.round(4 * p.k)
                 text: F.dateLine(p.view.now).toUpperCase()
-                color: Theme.textMuted
-                font.family: Theme.fontMono
+                color: Theme.primary
+                font.family: Theme.fontLabel
                 font.pixelSize: Math.round(11 * p.k)
                 font.letterSpacing: 2.4
             }
@@ -84,7 +130,7 @@ HudPanel {
         Rectangle {
             width: parent.width
             height: 1
-            color: Theme.alpha(Theme.outline, 0.8)
+            color: Theme.alpha(Theme.outline, 0.45)
         }
 
         EmptyState {
@@ -93,9 +139,11 @@ HudPanel {
             k: p.k
             glyph: ""
             warn: p.status === "error"
-            title: p.status === "disabled" ? "Weather is off" : p.status === "error" ? "Weather unavailable" : "Waiting for the forecast…"
+            title: p.status === "disabled" ? "Weather is off" : p.status === "no_location" ? "Location not set"
+                 : p.status === "error" ? "Weather unavailable" : "Waiting for the forecast…"
             detail: p.status === "disabled" ? "Turn it on in [weather] in config.toml."
-                  : p.status === "error" ? "Open-Meteo couldn't be reached. JARVIS retries in a couple of minutes." : ""
+                  : p.status === "no_location" ? "Set [weather] location in config.toml (the place of the event)."
+                  : p.status === "error" ? "Open-Meteo couldn't be reached (or the place wasn't found). JARVIS retries in a couple of minutes." : ""
             actionText: p.status === "error" ? "RETRY NOW" : ""
             onAction: p.view.send({ cmd: "weather.refresh" })
         }
@@ -126,6 +174,7 @@ HudPanel {
                 text: p.cur ? F.temp(p.cur.temp) : ""
                 color: Theme.text
                 font.family: Theme.fontUiLight
+                font.weight: Font.Light
                 font.pixelSize: Math.round(42 * p.k)
             }
             Column {
@@ -168,13 +217,11 @@ HudPanel {
         Rectangle {
             visible: !!(p.w && p.w.rain_next_3h)
             width: parent.width
-            height: Math.round(34 * p.k)
-            color: Theme.alpha(Theme.warn, 0.09)
-            Rectangle {
-                width: 2
-                height: parent.height
-                color: Theme.warn
-            }
+            height: Math.round(36 * p.k)
+            radius: Math.round(9 * p.k) * Theme.round
+            color: Theme.alpha(Theme.warn, 0.08)
+            border.width: 1
+            border.color: Theme.alpha(Theme.warn, 0.22)
             Text {
                 id: umbrella
                 x: Math.round(14 * p.k)
@@ -208,18 +255,36 @@ HudPanel {
         }
 
         // ── next 6 hours ──
-        Row {
-            visible: !p.showDays && p.hours.length > 0
+        Item {
+          visible: !p.showDays && p.hours.length > 0
+          width: parent.width
+          height: hrow.height
+          // "now" sits in a soft cell
+          Rectangle {
+            x: Math.round(4 * p.k)
+            width: col.width / Math.max(1, p.hours.length) - 2 * x
+            height: parent.height
+            radius: Math.round(10 * p.k) * Theme.round
+            color: Theme.alpha(Theme.grad1, 0.12)
+            border.width: 1
+            border.color: Theme.alpha(Theme.grad1, 0.25)
+          }
+          Row {
+            id: hrow
             width: parent.width
             Repeater {
                 model: p.hours
                 delegate: Column {
+                    id: hcol
                     required property var modelData
                     required property int index
                     readonly property var h: modelData || ({})
                     readonly property int prob: Number(h.precip_prob) || 0
                     width: col.width / Math.max(1, p.hours.length)
                     spacing: Math.round(5 * p.k)
+                    topPadding: Math.round(7 * p.k)
+                    bottomPadding: Math.round(7 * p.k)
+
                     Text {
                         anchors.horizontalCenter: parent.horizontalCenter
                         text: parent.index === 0 ? "NOW" : F.str(parent.h.time).slice(0, 2)
@@ -253,10 +318,12 @@ HudPanel {
                     }
                 }
             }
+          }
         }
 
         // ── 3 days ──
         Column {
+            id: daysCol
             visible: p.showDays && p.days.length > 0
             width: parent.width
             spacing: Math.round(10 * p.k)
@@ -310,15 +377,15 @@ HudPanel {
                         anchors.rightMargin: 10
                         anchors.verticalCenter: parent.verticalCenter
                         height: 3
-                        readonly property real span: Math.max(1, day.parent.hi - day.parent.lo)
+                        readonly property real span: Math.max(1, daysCol.hi - daysCol.lo)
                         Rectangle {
                             anchors.fill: parent
                             color: Theme.alpha(Theme.textMuted, 0.14)
                         }
                         Rectangle {
                             height: parent.height
-                            x: ((F.num(day.d.min) ?? day.parent.lo) - day.parent.lo) / range.span * range.width
-                            width: Math.max(3, ((F.num(day.d.max) ?? day.parent.hi) - (F.num(day.d.min) ?? day.parent.lo)) / range.span * range.width)
+                            x: ((F.num(day.d.min) ?? daysCol.lo) - daysCol.lo) / range.span * range.width
+                            width: Math.max(3, ((F.num(day.d.max) ?? daysCol.hi) - (F.num(day.d.min) ?? daysCol.lo)) / range.span * range.width)
                             color: Theme.primary
                         }
                     }

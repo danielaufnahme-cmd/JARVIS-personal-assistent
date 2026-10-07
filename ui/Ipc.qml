@@ -27,7 +27,10 @@ Scope {
     property var job: null              // section 15: the running (or last) coding job, from `job` events
     property bool inControl: false      // section 19: a computer_task drives the mouse/keyboard (`computer` events)
     property string controlGoal: ""
-    property bool showcase: false       // section 24: "present yourself" is running (`showcase` events)
+    // The showcase is running: section 25's cinematic one (`showcase.start` / `showcase.end`; its choreography and
+    // the pill's trip listen to the showcase.* events themselves) or section 24's script one (`showcase` events).
+    property bool showcaseActive: false
+    property string showcaseLang: ""
     property bool micBusy: false        // section 13: another app (dictation, a call) records the mic
     property var micBusyApps: []
     property string transcript: ""
@@ -39,7 +42,22 @@ Scope {
     signal daemonError(string source, string message)
     signal event(var msg)   // every parsed event, after the properties above are updated (the HUD's store)
 
+    // The HUD opens and closes HERE at once; jarvisd only follows (its state comes back in the `hud` event). A
+    // toggle is sent as an explicit open/close so the two can't drift apart; an open made while jarvisd is down is
+    // sent to it once it connects.
+    property bool _hudPending: false
+    function _hudCommand(obj) {
+        const c = obj && obj.cmd;
+        if (c !== "hud.toggle" && c !== "hud.open" && c !== "hud.close")
+            return obj;
+        const open = c === "hud.toggle" ? !root.hudOpen : c === "hud.open";
+        root.hudOpen = open;
+        root._hudPending = open && !root._connected;
+        return Object.assign({}, obj, { cmd: open ? "hud.open" : "hud.close" });
+    }
+
     function send(obj) {
+        obj = root._hudCommand(obj);
         if (!root._connected || !root.sock)
             return false;
         try {
@@ -124,12 +142,18 @@ Scope {
                 root.sessionActive = !!(st.session ?? st.active);
                 root._applyDraft(msg.draft);
                 root._applyModel(msg.model);
-                root.hudOpen = !!(msg.hud && (msg.hud.open ?? msg.hud));
+                if (root._hudPending) {   // opened while jarvisd was still starting: tell it now
+                    root._hudPending = false;
+                    root.send({ cmd: "hud.open" });
+                } else {
+                    root.hudOpen = !!(msg.hud && (msg.hud.open ?? msg.hud));
+                }
                 root._applyVoiceVolume(msg.voice_volume);
                 root._applyJob(msg.job);
                 root.inControl = !!(msg.computer && msg.computer.active);
                 root.controlGoal = msg.computer ? String(msg.computer.goal || "") : "";
-                root.showcase = !!(msg.showcase && msg.showcase.active);
+                root.showcaseActive = !!(msg.showcase && msg.showcase.active);
+                root.showcaseLang = msg.showcase ? String(msg.showcase.lang || "") : "";
                 root.micBusy = !!(msg.mic_busy && msg.mic_busy.busy);
                 root.micBusyApps = (msg.mic_busy && msg.mic_busy.apps) || [];
                 root.level = 0;
@@ -178,8 +202,15 @@ Scope {
                 root.inControl = !!msg.active;
                 root.controlGoal = String(msg.goal || "");
                 break;
-            case "showcase":
-                root.showcase = !!msg.active;
+            case "showcase":         // section 24's script showcase
+                root.showcaseActive = !!msg.active;
+                break;
+            case "showcase.start":   // section 25: the pill's trip itself is PillTravel.qml (showcase.move / .end)
+                root.showcaseActive = true;
+                root.showcaseLang = String(msg.lang || "");
+                break;
+            case "showcase.end":
+                root.showcaseActive = false;
                 break;
             case "hud":
                 root.hudOpen = !!msg.open;
@@ -227,7 +258,9 @@ Scope {
             root.level = 0;
             root.mode = "idle";
             root.sessionActive = false;
-            root.hudOpen = false;
+            if (!root._hudPending)
+                root.hudOpen = false;
+            root.showcaseActive = false;
             root.draft = null;   // it comes back in the snapshot on reconnect
         }
     }
