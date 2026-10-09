@@ -9,6 +9,8 @@ Keys:
   1 idle   2 waking   3 listening (fake mic level)   4 thinking   5 speaking (fake TTS level)
   6 email draft (awaiting_confirm)   s SMS draft   r revise the pending draft (new id, like the real gate)
   x make the next send fail   z silently re-id the pending draft (tests stale-id acks)   7 alert   8 deep   m model loaded/unloaded   h hud toggle   q quit
+  Section 28: a attach files (chip)   g a boxed screen region (thumbnail)   k meeting notes REC on/off   f focus on/off
+  p pause/resume focus   n one more unseen notification   v memory saved   y search results
   HUD widgets (section 9): w full data   e empty data (nothing connected)   c add a conversation exchange
   Commands the HUD sends (email.open, news.read, reminder.cancel, ...) are acked and logged.
 
@@ -280,6 +282,12 @@ class Mock:
         self.widgets: dict = fixture_widgets("full")
         self.widget_kind = "full"
         self.demo_i = 0
+        # section 28
+        self.attach: list[dict] = []
+        self.meeting: dict = {"active": False, "started_at": None, "title": ""}
+        self.notify: dict = {"count": 0, "top": ""}
+        self.focus: dict = {"active": False, "paused": False, "label": "", "started_at": None, "ends_at": None}
+        self._focus_left = 0
 
     # --- output -------------------------------------------------------------
 
@@ -293,6 +301,7 @@ class Mock:
         m.pop("ev")
         return {"ev": "snapshot", "state": {"mode": self.mode, "session": self.session},
                 "draft": self.draft, "model": m, "hud": {"open": self.hud},
+                "attach": {"items": self.attach}, "meeting": self.meeting, "notify": self.notify, "focus": self.focus,
                 "widgets": {**self.widgets, **({"system": fixture_system(time.time(), self.loaded)}
                                                if self.widget_kind == "full" else {})}}
 
@@ -437,8 +446,54 @@ class Mock:
                 self.emit(self.model_ev())
         elif key == "h":
             self.set_hud(not self.hud)
+        elif key in "agkfpnvy":
+            self.section28(key)
         elif key == "q":
             raise SystemExit(0)
+
+    # --- section 28 ---------------------------------------------------------
+
+    def section28(self, key: str) -> None:
+        now = int(time.time())
+        if key == "a":
+            self.attach = [{"kind": "file", "name": "Q3 report.pdf", "thumb": None},
+                           {"kind": "image", "name": "receipt.jpg", "thumb": None}]
+            self.emit({"ev": "attach.state", "items": self.attach})
+            if not self.session:
+                self.set_mode("listening", session=True)
+        elif key == "g":
+            self.attach = [{"kind": "region", "name": "Screen region", "thumb": tiny_png_b64()}]
+            self.emit({"ev": "attach.state", "items": self.attach})
+            if not self.session:
+                self.set_mode("listening", session=True)
+        elif key == "k":
+            on = not self.meeting["active"]
+            self.meeting = {"active": on, "started_at": now if on else None, "title": "Weekly sync" if on else ""}
+            self.emit({"ev": "meeting.state", **self.meeting})
+        elif key == "f":
+            on = not self.focus["active"]
+            self.focus = {"active": on, "paused": False, "label": "Geonix invoices" if on else "",
+                          "started_at": now if on else None, "ends_at": now + 45 * 60 if on else None}
+            self.emit({"ev": "focus.state", **self.focus})
+        elif key == "p" and self.focus["active"]:
+            if self.focus["paused"]:
+                self.focus = {**self.focus, "paused": False, "ends_at": now + self._focus_left}
+            else:
+                self._focus_left = max(0, self.focus["ends_at"] - now)
+                self.focus = {**self.focus, "paused": True}
+            self.emit({"ev": "focus.state", **self.focus})
+        elif key == "n":
+            n = self.notify["count"] + 1
+            self.notify = {"count": n, "top": f"Anna (Slack): message {n}, are we still on for 3 pm?"}
+            self.emit({"ev": "notify.unseen", **self.notify})
+        elif key == "v":
+            self.emit({"ev": "memory.saved", "kind": "fact", "text": "Your car is on level 3"})
+        elif key == "y":
+            self.emit({"ev": "search.results", "query": "invoice Hetzner", "items": [
+                {"path": "/home/u/Documents/Invoices/hetzner-R0021184.pdf", "name": "hetzner-R0021184.pdf",
+                 "folder": "Documents/Invoices", "modified": now - 3 * 86400, "snippet": "Amount due EUR 6.49"},
+                {"path": "/home/u/Documents/taxes-2026.ods", "name": "taxes-2026.ods", "folder": "Documents",
+                 "modified": now - 5 * 3600, "snippet": "Hetzner Online GmbH, server, 77.88"}]})
 
     def set_widgets(self, kind: str) -> None:
         self.widget_kind = kind
@@ -582,6 +637,44 @@ class Mock:
         if name == "say":
             self.emit({"ev": "transcript", "text": str(cmd.get("text", "")), "final": True})
             return True, None, None
+        # section 28
+        if name == "attach.add":
+            uris, text = cmd.get("uris") or [], cmd.get("text")
+            self.attach += [{"kind": "url" if str(u).startswith("http") else "file",
+                             "name": str(u).rstrip("/").rsplit("/", 1)[-1], "thumb": None} for u in uris]
+            if text:
+                self.attach.append({"kind": "text", "name": "“" + " ".join(str(text).split())[:40] + "”", "thumb": None})
+            self.emit({"ev": "attach.state", "items": self.attach})
+            if not self.session:
+                self.set_mode("listening", session=True)
+            return True, None, {"added": len(uris) + bool(text), "items": len(self.attach), "refused": []}
+        if name == "attach.clear":
+            cleared, self.attach = bool(self.attach), []
+            self.emit({"ev": "attach.state", "items": []})
+            return True, None, {"cleared": cleared}
+        if name == "region.ask":
+            self.section28("g")
+            return True, None, {"added": 1, "refused": False, "items": 1}
+        if name == "meeting.stop":
+            if self.meeting["active"]:
+                self.section28("k")
+            return True, None, {"stopped": True}
+        if name == "focus.stop":
+            if self.focus["active"]:
+                self.section28("f")
+            return True, None, {"stopped": True}
+        if name == "focus.pause":
+            self.section28("p")
+            return True, None, {"paused": self.focus["paused"]}
+        if name in ("notify.summary", "notify.clear"):
+            self.notify = {"count": 0, "top": ""}
+            self.emit({"ev": "notify.unseen", **self.notify})
+            if name == "notify.summary":
+                self.emit({"ev": "reply", "delta": "Three messages from Anna, sir, about the 3 pm meeting. "})
+            return True, None, None
+        if name == "search.open":
+            return (True, None, {"opened": cmd.get("path")}) if isinstance(cmd.get("path"), str) else \
+                (False, 'search.open needs a "path"', None)
         return False, f"unknown command: {name}", None
 
     async def client(self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:
@@ -614,6 +707,24 @@ class Mock:
             self.clients.discard(writer)
             writer.close()
             log(f"client gone ({len(self.clients)})")
+
+
+def tiny_png_b64(w: int = 96, h: int = 56) -> str:
+    """A small dark 'screen crop' PNG (stdlib only), for the region chip's thumbnail."""
+    import base64
+    import struct
+    import zlib
+
+    rows = b"".join(b"\x00" + b"".join(
+        bytes((210, 90, 80)) if 8 < y < 14 and 6 < x < 60 else bytes((70, 110, 190)) if y > 42 and x > 66
+        else bytes((36, 38, 44)) for x in range(w)) for y in range(h))
+
+    def chunk(kind: bytes, data: bytes) -> bytes:
+        return struct.pack(">I", len(data)) + kind + data + struct.pack(">I", zlib.crc32(kind + data) & 0xFFFFFFFF)
+
+    png = b"\x89PNG\r\n\x1a\n" + chunk(b"IHDR", struct.pack(">IIBBBBB", w, h, 8, 2, 0, 0, 0)) \
+        + chunk(b"IDAT", zlib.compress(rows)) + chunk(b"IEND", b"")
+    return base64.b64encode(png).decode()
 
 
 def socket_in_use(path: str) -> bool:

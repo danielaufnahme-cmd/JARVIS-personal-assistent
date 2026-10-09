@@ -6,7 +6,8 @@ import "fmt.js" as F
 import "../md.js" as Md
 
 // ⑦ Conversation / deep answer: the last 4 exchanges as text; in deep mode the streamed markdown answer,
-// scrollable, with Copy.
+// scrollable, with Copy. Section 28: a file search's results get their own tab (a click opens the file), and what was
+// dropped on the orb shows as a chip in the header.
 HudPanel {
     id: p
 
@@ -16,10 +17,12 @@ HudPanel {
     readonly property bool deepLive: view.ipc.mode === "deep" || (!view.store.deepDone && deep !== "")
     property string tab: deepLive ? "answer" : "chat"
     property bool copied: false
+    readonly property var results: view.ipc.searchResults
+    readonly property var attached: view.ipc.connected ? view.ipc.attachments : []
 
     index: "07"
-    icon: tab === "answer" ? "\uf0eb" : "\uf086"
-    label: tab === "answer" ? "DEEP ANSWER" : "CONVERSATION"
+    icon: tab === "answer" ? "\uf0eb" : tab === "results" ? "\uf002" : "\uf086"
+    label: tab === "answer" ? "DEEP ANSWER" : tab === "results" ? "FOUND" : "CONVERSATION"
     k: view.k
     active: deepLive
 
@@ -32,6 +35,14 @@ HudPanel {
                 p.tab = "chat";
         }
     }
+    // Section 28: new search results take the panel (the header button goes back).
+    Connections {
+        target: p.view.ipc
+        function onSearchResultsChanged() {
+            if (p.view.ipc.searchResults && !p.deepLive)
+                p.tab = "results";
+        }
+    }
     // A draft needs the core's space for its card: fold the answer back down.
     Connections {
         target: p.view.ipc
@@ -42,6 +53,43 @@ HudPanel {
     }
 
     header: [
+        // Section 28: what was dropped on the orb (or boxed on screen), waiting for the next question.
+        Rectangle {
+            visible: p.attached.length > 0
+            anchors.verticalCenter: parent.verticalCenter
+            width: Math.min(Math.round(260 * p.k), attRow.implicitWidth + Math.round(16 * p.k))
+            height: Math.round(22 * p.k)
+            radius: height / 2 * Theme.round
+            color: Theme.alpha(Theme.primary, 0.12)
+            clip: true
+            Row {
+                id: attRow
+                x: Math.round(8 * p.k)
+                anchors.verticalCenter: parent.verticalCenter
+                spacing: Math.round(6 * p.k)
+                Text {
+                    text: "\uf0c6"
+                    color: Theme.primary
+                    font.family: Theme.fontMono
+                    font.pixelSize: Math.round(10 * p.k)
+                }
+                Text {
+                    text: !p.attached.length ? "" : (p.attached[0].kind === "region" ? "SCREEN REGION" : p.attached[0].name)
+                        + (p.attached.length > 1 ? "  +" + (p.attached.length - 1) : "")
+                    textFormat: Text.PlainText
+                    color: Theme.primary
+                    font.family: Theme.fontLabel
+                    font.pixelSize: Math.round(10 * p.k)
+                    font.letterSpacing: 0.6
+                }
+            }
+        },
+        HudButton {
+            visible: !!p.results && p.tab !== "answer"
+            k: p.k
+            text: p.tab === "results" ? "CONVERSATION" : "RESULTS"
+            onClicked: p.tab = p.tab === "results" ? "chat" : "results"
+        },
         Text {
             anchors.verticalCenter: parent.verticalCenter
             visible: p.tab === "answer" && !p.view.store.deepDone
@@ -93,6 +141,101 @@ HudPanel {
         glyph: ""
         title: "No conversation yet"
         detail: "Say “Jarvis” or click the core, then just talk. The last four exchanges appear here."
+    }
+
+    // ── section 28: file search results (≤ 5); a click opens the file (search.open, checked by the daemon) ──
+    Column {
+        id: found
+        visible: p.tab === "results" && !!p.results
+        width: parent.width
+        readonly property var rows: p.results ? p.results.items : []
+        Text {
+            visible: found.rows.length === 0
+            text: p.results ? "Nothing found for “" + p.results.query + "”." : ""
+            textFormat: Text.PlainText
+            color: Theme.textMuted
+            font.family: Theme.fontUi
+            font.pixelSize: Math.round(14 * p.k)
+        }
+        Repeater {
+            model: found.rows
+            delegate: Item {
+                id: hit
+                required property var modelData
+                required property int index
+                width: found.width
+                height: Math.round(54 * p.k)
+                visible: y + height <= p.bodyItem.height + 1
+                HoverHandler {
+                    id: hitHover
+                    cursorShape: Qt.PointingHandCursor
+                }
+                MouseArea {
+                    anchors.fill: parent
+                    onClicked: p.view.send({ cmd: "search.open", path: hit.modelData.path })
+                }
+                Rectangle {
+                    anchors.fill: parent
+                    anchors.topMargin: 3
+                    anchors.bottomMargin: 3
+                    anchors.leftMargin: -6
+                    anchors.rightMargin: -6
+                    radius: Math.round(9 * p.k) * Theme.round
+                    color: Theme.alpha(Theme.text, 0.05)
+                    opacity: hitHover.hovered ? 1 : 0
+                    Behavior on opacity { NumberAnimation { duration: Theme.animFast } }
+                }
+                Text {
+                    id: hitGlyph
+                    x: Math.round(4 * p.k)
+                    width: Math.round(22 * p.k)
+                    horizontalAlignment: Text.AlignHCenter
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: /\.pdf$/i.test(hit.modelData.name) ? "" : /\.(docx?|odt)$/i.test(hit.modelData.name) ? ""
+                        : /\.(png|jpe?g|webp|gif)$/i.test(hit.modelData.name) ? "" : ""
+                    color: hitHover.hovered ? Theme.primaryBright : Theme.primary
+                    font.family: Theme.fontMono
+                    font.pixelSize: Math.round(14 * p.k)
+                }
+                Text {
+                    id: hitName
+                    anchors.left: hitGlyph.right
+                    anchors.leftMargin: Math.round(14 * p.k)
+                    anchors.right: hitWhen.left
+                    anchors.rightMargin: 12
+                    y: Math.round(9 * p.k)
+                    text: hit.modelData.name
+                    textFormat: Text.PlainText
+                    elide: Text.ElideMiddle
+                    color: Theme.text
+                    font.family: Theme.fontUi
+                    font.pixelSize: Math.round(14 * p.k)
+                }
+                Text {
+                    id: hitWhen
+                    anchors.right: parent.right
+                    anchors.rightMargin: 2
+                    anchors.baseline: hitName.baseline
+                    text: hit.modelData.modified ? F.when(hit.modelData.modified, p.view.nowSlow) : ""
+                    color: Theme.textMuted
+                    font.family: Theme.fontUi
+                    font.pixelSize: Math.round(12 * p.k)
+                }
+                Text {
+                    anchors.left: hitName.left
+                    anchors.right: parent.right
+                    anchors.top: hitName.bottom
+                    anchors.topMargin: Math.round(2 * p.k)
+                    text: hit.modelData.folder + (hit.modelData.snippet ? "  ·  " + hit.modelData.snippet : "")
+                    textFormat: Text.PlainText
+                    elide: Text.ElideRight
+                    color: Theme.textMuted
+                    opacity: 0.8
+                    font.family: Theme.fontUi
+                    font.pixelSize: Math.round(12 * p.k)
+                }
+            }
+        }
     }
 
     // ── streaming reveal of the newest reply ──

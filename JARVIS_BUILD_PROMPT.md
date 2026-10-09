@@ -417,6 +417,17 @@ full `snapshot`, and after that only changes. `jarvisctl` and tests honour `$JAR
 {"ev":"widgets","firm":{...}|null,"firm_status":"ok|not_configured|error|disabled","firm_hint":"…"}
                               // section 18: Geonix Wrench's numbers every 15 min; exact shape below
 {"ev":"briefing","text":"Good morning, sir: …"}   // section 18: the daily briefing was just spoken (UI may show it)
+{"ev":"memory.saved","kind":"fact|conversation|forgot","text":"≤ 80 chars"}   // section 26: something was remembered
+{"ev":"meeting.state","active":true,"started_at":1790000000,"title":""}   // section 26: meeting notes recording
+                              // (snapshot "meeting", same shape; started_at null and title "" when not recording)
+{"ev":"search.results","query":"plumber invoice","items":[{"path","name","folder","modified","snippet"}]}
+                              // section 26: search_files' top ≤ 5 (modified = epoch s; snippet is file text: plain)
+{"ev":"alert","kind":"meeting","id":"…","text":"Meeting notes: …","spoken":"The meeting notes are ready, sir. …"}
+{"ev":"notify.unseen","count":2,"top":"Anna (Gmail)"}   // section 27: missed notifications changed (snapshot "notify")
+{"ev":"focus.state","active":true,"paused":false,"label":"Geonix","started_at":1790000000,"ends_at":1790002700}
+                              // section 27: focus mode (snapshot "focus", same shape; started_at/ends_at null when off)
+{"ev":"alert","kind":"notify|focus","id":"…","text":"…","spoken":"…"}   // section 27: a summary / the focus recap;
+                              // a reminder during focus carries "quiet":true (the pill flashes, nothing is spoken)
 {"ev":"alert","kind":"reminder|timer","id":"r12","text":"Call the dentist","due_ts":1790000000,"late_s":0}
                               // section 5 also speaks it ("Reminder, sir: …"); late_s > 0 = was due while jarvisd was down
 {"ev":"voice_volume","level":0.5,"muted":false,"duck":true}   // JARVIS's own volume/mute/ducking changed
@@ -446,6 +457,10 @@ full `snapshot`, and after that only changes. `jarvisctl` and tests honour `$JAR
 {"cmd":"system.poll"}       // one system sample now (even with the HUD closed); ack "result" = the `system` object
 {"cmd":"firm.refresh"}      // section 18: refetch now (at most one request a minute); ack "result":{"firm_status","stale","hint"}
 {"cmd":"firm.reload"}       // re-read the keyring (sent by `jarvisctl setup firm geonix`), then refresh; same ack
+{"cmd":"search.open","path":"/home/u/Documents/x.pdf"}   // section 26: only a path from the last search.results
+{"cmd":"meeting.stop"}     // section 26: the pill's stop button; ack "result":{"stopped":bool}, then the notes are written
+{"cmd":"notify.summary"}   {"cmd":"notify.clear"}   // section 27: speak the missed ones (ack "result":{"text","count"}) / drop them
+{"cmd":"focus.stop"}   {"cmd":"focus.pause"}        // section 27: end focus (the recap is spoken) / pause-resume toggle
 {"cmd":"briefing.get"}   {"cmd":"briefing.set","enabled":false}   // the pill's "Daily briefing" toggle (persisted);
                          // ack "result":{"enabled","done_today"}. {"cmd":"briefing.preview"} adds "text" (not spoken)
 // section 9, the HUD's click actions (jarvis/integrations/hud_actions.py). Each becomes an ordinary typed turn
@@ -455,6 +470,13 @@ full `snapshot`, and after that only changes. `jarvisctl` and tests honour `$JAR
 {"cmd":"news.read","link":"https://…"}   // only a headline from the last widgets event; its text goes into the
                                          // turn wrapped in <external_content source="news">
 // The HUD's hover *Open* on a headline opens http(s) links with xdg-open in the UI; Copy uses the clipboard. No command.
+// section 28 (build/28-pill-drop-region-and-ui.md): a drop on the pill, a box drawn with SUPER+SHIFT+X
+{"cmd":"attach.add","uris":["file:///home/u/a.pdf","https://…"],"text":null}   // ack "result":{"added","items","refused":[{name,why}]}
+{"cmd":"attach.clear"}   {"cmd":"region.ask","image":"<base64 png|jpeg ≤ 700 kB>","format":"png","geometry":"x,y wxh"}
+// events: {"ev":"attach.state","items":[{"kind":"file|image|folder|url|text|region","name","thumb":<base64 png>|null}]}
+// (snapshot key "attach"); the pill also reads sections 26/27's memory.saved, meeting.state, search.results,
+// notify.unseen, focus.state (snapshot keys "meeting", "notify", "focus") and sends meeting.stop, search.open,
+// notify.summary, notify.clear, focus.pause (a toggle), focus.stop
 ```
 Voice volume: `level` is JARVIS's own loudness, cubic like pactl (gain = level³, 0.5 = −18 dB), relative to the
 hardware sink, so the system volume never changes it. While `muted`, JARVIS makes no sound at all (no TTS, no

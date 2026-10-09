@@ -1295,7 +1295,8 @@ class Voice:
                     self.speaker.flush()
                 elif ev == "state" and event.get("mode") not in ("thinking", "deep") and self.speaker is not None:
                     self.speaker.flush()
-                elif ev == "alert" and self.speaker is not None and event.get("text") and not self.volume.muted:
+                elif ev == "alert" and self.speaker is not None and event.get("text") and not self.volume.muted \
+                        and not event.get("quiet"):  # section 27: a reminder during focus only flashes the pill
                     # Reminders and timers are spoken as well as flashed. Section 15: an alert with its own
                     # spoken line ("Your project … is ready in Projects.") says that instead.
                     spoken = event.get("spoken")

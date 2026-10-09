@@ -27,6 +27,17 @@ MAX_REMINDER_SLEEP_S = 30.0    # also picks up reminders another process (the ty
 _MISSING = object()
 
 
+def _focus_quiet(fields: dict[str, Any]) -> dict[str, Any]:
+    """Section 27: during focus mode an ordinary reminder only flashes the pill (`quiet`); see integrations/focus.py."""
+    try:
+        from jarvis.integrations.awareness import alert_fields
+
+        return alert_fields(fields)
+    except Exception:  # noqa: BLE001 - a reminder must always fire
+        log.exception("focus check for an alert failed")
+        return fields
+
+
 class LifeWidgets:
     def __init__(
         self,
@@ -162,7 +173,7 @@ class LifeWidgets:
             timeout = MAX_REMINDER_SLEEP_S
             try:
                 r.mark_seen()
-                r.fire_due(lambda **kw: self.bus.emit("alert", **kw))
+                r.fire_due(lambda **kw: self.bus.emit("alert", **_focus_quiet(kw)))
                 self.publish_reminders()
                 nxt = r.next_due()
                 if nxt is not None:

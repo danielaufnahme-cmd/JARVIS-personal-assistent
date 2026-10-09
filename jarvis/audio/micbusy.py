@@ -39,6 +39,8 @@ EE_APP_ID = "com.github.wwmm.easyeffects"
 DEFAULT_IGNORE = ("noctalia", "peak detect", "pavucontrol", "pwvucontrol", "cava", "easyeffects")
 NO_MODULE = (None, "", -1, 4294967295, "4294967295")
 _SOURCE_OUTPUT_EVENT = re.compile(r"Event '(new|remove|change)' on source-output #(\d+)")
+# Section 26: recorders jarvisd starts itself (the meeting notes' pw-record): never "another app".
+OWN_PIDS: set[int] = set()
 
 
 @dataclass(frozen=True)
@@ -143,8 +145,8 @@ def other_recorders(snap: Snapshot, *, own_pid: int, mic_sources: Iterable[str],
         client = clients.get(str(o.get("client", "")), {})
         pid_s = str(p.get("application.process.id") or client.get("application.process.id") or "")
         pid = int(pid_s) if pid_s.isdigit() else None
-        if pid is not None and pid == own_pid:
-            continue  # JARVIS itself
+        if pid is not None and (pid == own_pid or pid in OWN_PIDS):
+            continue  # JARVIS itself (and its own meeting recorder)
         app = str(p.get("application.name") or client.get("application.name") or "")
         binary = str(p.get("application.process.binary") or client.get("application.process.binary") or "")
         node = str(p.get("node.name", ""))

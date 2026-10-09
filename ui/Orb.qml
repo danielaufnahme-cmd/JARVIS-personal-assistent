@@ -22,10 +22,36 @@ Item {
     // true: hold still (no breathing). The pill sets it while the fullscreen HUD covers it in lean mode: every tick
     // of its breathing made the HUD draw a frame too (one GUI-thread animation clock).
     property bool paused: false
+    // Section 28: focus mode's time left as a thin OUTER ring (0..1; < 0 = no focus). The 35B's unload countdown
+    // stays on the orb's own ring inside it: two radii, two weights, so both read at a glance.
+    property real focusFrac: -1
+    property bool focusPaused: false
 
     function flashAlert() {
         flashAnim.restart();
     }
+    // Section 28: something was remembered: a small four-point spark at the orb's shoulder, and a soft glow.
+    function spark() {
+        if (Theme.reduceMotion) {
+            orb.sparkle = 1;
+            sparkHold.restart();
+        } else {
+            sparkAnim.restart();
+        }
+    }
+    property real sparkle: 0
+    Timer {
+        id: sparkHold
+        interval: 1200
+        onTriggered: orb.sparkle = 0
+    }
+    SequentialAnimation {
+        id: sparkAnim
+        NumberAnimation { target: orb; property: "sparkle"; to: 1; duration: 180; easing.type: Easing.OutCubic }
+        PauseAnimation { duration: 260 }
+        NumberAnimation { target: orb; property: "sparkle"; to: 0; duration: 620; easing.type: Easing.InOutSine }
+    }
+
     // Section 10: one soft pulse when a deep answer has finished writing.
     function pulseOnce() {
         flareAnim.restart();
@@ -74,7 +100,8 @@ Item {
     Behavior on baseScale { NumberAnimation { duration: Theme.animMed; easing.type: Easing.OutBack; easing.overshoot: Theme.springOvershoot * 2 } }
     Behavior on baseRing { NumberAnimation { duration: Theme.animMed; easing.type: Easing.OutCubic } }
 
-    readonly property real glow: Math.min(1, baseGlow + (idleish ? breath * 0.22 : 0) + lvl * 0.5 + flare * 0.6 + flash * 0.8)
+    readonly property real glow: Math.min(1, baseGlow + (idleish ? breath * 0.22 : 0) + lvl * 0.5 + flare * 0.6 + flash * 0.8
+                                             + sparkle * 0.3)
     readonly property real coreScale: baseScale * (1 + lvl * (mode === "listening" ? 0.42 : 0.3) + flare * 0.25 + (idleish ? breath * 0.04 : 0))
 
     opacity: offline ? 0.4 : 1
@@ -227,6 +254,62 @@ Item {
             fillColor: Theme.transparent
             startX: orb.cx - orb.ringR * 0.72; startY: orb.cy + orb.ringR * 0.72
             PathLine { x: orb.cx + orb.ringR * 0.72; y: orb.cy - orb.ringR * 0.72 }
+        }
+    }
+
+    // ── section 28: focus mode's outer ring (a faint full track, the time left drawn over it, a dot at its head) ──
+    readonly property bool focusOn: focusFrac >= 0 && !offline
+    readonly property real focusR: ringR + 4.2 * u
+    readonly property color focusColor: focusPaused ? Theme.warn : Theme.primaryBright
+    Shape {
+        anchors.fill: parent
+        preferredRendererType: Shape.CurveRenderer
+        visible: orb.focusOn
+        opacity: orb.focusPaused ? 0.55 : 1
+        ShapePath {
+            strokeColor: Theme.alpha(orb.focusColor, 0.2)
+            strokeWidth: 0.9 * orb.u
+            fillColor: Theme.transparent
+            PathAngleArc { centerX: orb.cx; centerY: orb.cy; radiusX: orb.focusR; radiusY: orb.focusR; startAngle: 0; sweepAngle: 360 }
+        }
+        ShapePath {
+            strokeColor: orb.focusColor
+            strokeWidth: 1.1 * orb.u
+            capStyle: ShapePath.FlatCap
+            fillColor: Theme.transparent
+            PathAngleArc {
+                centerX: orb.cx; centerY: orb.cy; radiusX: orb.focusR; radiusY: orb.focusR
+                startAngle: -90
+                sweepAngle: 360 * Math.max(0.01, Math.min(1, orb.focusFrac))
+            }
+        }
+        Rectangle {
+            readonly property real a: (-90 + 360 * Math.max(0.01, Math.min(1, orb.focusFrac))) * Math.PI / 180
+            width: 2.6 * orb.u; height: width; radius: width / 2
+            x: orb.cx + orb.focusR * Math.cos(a) - width / 2
+            y: orb.cy + orb.focusR * Math.sin(a) - height / 2
+            color: orb.focusColor
+        }
+    }
+
+    // ── section 28: the memory spark, a four-point star at the orb's upper right ──
+    Shape {
+        id: sparkShape
+        readonly property real s: (2.6 + 2.2 * orb.sparkle) * orb.u
+        readonly property real sx: orb.cx + orb.ringR * 0.86
+        readonly property real sy: orb.cy - orb.ringR * 0.86
+        anchors.fill: parent
+        preferredRendererType: Shape.CurveRenderer
+        visible: orb.sparkle > 0.01 && !orb.offline
+        opacity: Math.min(1, orb.sparkle * 1.4)
+        ShapePath {
+            strokeColor: Theme.transparent
+            fillColor: Theme.primaryPale
+            startX: sparkShape.sx; startY: sparkShape.sy - sparkShape.s
+            PathQuad { x: sparkShape.sx + sparkShape.s; y: sparkShape.sy; controlX: sparkShape.sx; controlY: sparkShape.sy }
+            PathQuad { x: sparkShape.sx; y: sparkShape.sy + sparkShape.s; controlX: sparkShape.sx; controlY: sparkShape.sy }
+            PathQuad { x: sparkShape.sx - sparkShape.s; y: sparkShape.sy; controlX: sparkShape.sx; controlY: sparkShape.sy }
+            PathQuad { x: sparkShape.sx; y: sparkShape.sy - sparkShape.s; controlX: sparkShape.sx; controlY: sparkShape.sy }
         }
     }
 

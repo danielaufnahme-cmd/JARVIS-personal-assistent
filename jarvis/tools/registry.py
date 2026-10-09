@@ -53,7 +53,9 @@ _ASKS = {
         r"|go to|navigate|take (?:control|over)|do (?:it|that|this)|klik|klepn|zmáčkn|stiskn|napiš|vyplň|vyber"
         r"|otevř|pusť|přehraj|vyhledej|klick|drück|tipp|schreib|öffne|clic|pulsa|escrib|abr[ae])\w*",
         re.IGNORECASE),
-    "run": re.compile(r"\b(?:run|execute|launch|spusť|ausführ|führ\w* aus|ejecut)\w*", re.IGNORECASE),
+    # (section 28: converting or renaming a dropped file asks for a command too; run_command still shows its card)
+    "run": re.compile(r"\b(?:run|execute|launch|spusť|ausführ|führ\w* aus|ejecut|convert|rename|resize|compress|unzip"
+                      r"|převeď|přejmenuj|konvertier|umbenenn|convierte|renombr)\w*", re.IGNORECASE),
     "send": re.compile(
         r"\b(?:send|reply|answer|respond|e-?mail|mail|draft|forward|write (?:to|back)|pošli|odpověz|odepiš|napiš"
         r"|schick|antwort|envía|envia|respond)\w*", re.IGNORECASE),
@@ -232,12 +234,20 @@ def default_tools() -> list[Tool]:
     for module in (clock, contacts, drafts, email, weather, reminders, system, hud, news, agent_tools,
                    desktop, computer, files, coding, commands, firm, clipboard, showcase):
         tools.extend(module.TOOLS)
+    from jarvis.tools import meeting, memory, search  # section 26
+
+    for module in (memory, search, meeting):
+        tools.extend(module.TOOLS)
+    from jarvis.tools import awareness  # section 27: notifications, scene, focus, activity
+
+    tools.extend(awareness.TOOLS)
     return tools
 
 
 # Section 14: modules whose confirmable actions need executors on the gate. Each has
 # `register_executors(ctx)`, called whenever a gate is bound (it uses ctx.gate.register_executor).
 EXECUTOR_MODULES = ("jarvis.tools.files", "jarvis.tools.coding", "jarvis.tools.commands", "jarvis.tools.computer")
+EXECUTOR_MODULES += ("jarvis.tools.awareness",)  # section 27: scene.delete, activity.delete
 
 
 class ToolRegistry:

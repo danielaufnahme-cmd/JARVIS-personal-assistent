@@ -45,6 +45,23 @@ def _short(text: Any, limit: int = TITLE_CHARS) -> str:
     return text if len(text) <= limit else text[: limit - 1].rsplit(" ", 1)[0] + "…"
 
 
+def _focus_holds() -> bool:
+    from jarvis.integrations.awareness import briefing_hold
+
+    return briefing_hold()
+
+
+def _missed_line() -> str:
+    """Section 27: "3 notifications while you were away, one from Anna that looks urgent" (or "")."""
+    try:
+        from jarvis.integrations.awareness import briefing_line
+
+        return briefing_line()
+    except Exception:  # noqa: BLE001 - never break the briefing
+        log.exception("notification line for the briefing failed")
+        return ""
+
+
 class Briefing:
     def __init__(
         self,
@@ -93,7 +110,7 @@ class Briefing:
 
     def take(self, muted: bool = False) -> str | None:
         """The briefing text if it's due (and marks the day as done), else None. Muted: None, not used up."""
-        if muted or not self.due():
+        if muted or not self.due() or _focus_holds():  # section 27: held (not used up) during focus mode
             return None
         try:
             text = self.compose()
@@ -163,7 +180,7 @@ class Briefing:
         w = self.widgets() or {}
         greeting = self._greeting()
         firm = self._firm(w)
-        day = "; ".join(p for p in (self._schedule(w), self._weather(w)) if p)
+        day = "; ".join(p for p in (self._schedule(w), self._weather(w), _missed_line()) if p)
         if firm:
             return f"{greeting}: {firm}. {day[:1].upper()}{day[1:]}."
         return f"{greeting}: {day}."

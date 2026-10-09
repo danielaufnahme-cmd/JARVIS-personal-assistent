@@ -31,6 +31,16 @@ model has no send tool at all. The build history and the full spec are in `JARVI
 | "Go full screen" / "Close full screen" | Opens or closes the HUD |
 | "Go to sleep" | Ends the session and unloads the models now |
 | "Code me a snake game in Python" | A **confirm card** first; then opencode builds it in `~/Projects/<name>` on the heavier Qwen3.8-27B (Ollama) in a ghostty window, where you approve each shell command. The voice stays on the small model. When opencode exits: "Your project … is ready in Projects." "How's the project going?" / "Stop the coding job" (confirmed too). One job at a time |
+| "Remember the car is on level 3" / "Remember Anna's birthday is March 4th" / "What did I tell you about the router?" / "Forget that" / "What do you know about me?" | **Long-term memory** (section 26): facts go into `~/Documents/JARVIS/Memory/facts.md`, one dated line each, which you can edit by hand. Lasting things you say yourself ("I prefer short answers") are also picked up after the session, never commands, never passwords/codes/card numbers, and never anything an email, page, file or the screen said. See *Memory and knowledge* below |
+| "What did we talk about yesterday?" / "What did you tell me about Rust vs Go last week?" / "Don't remember this conversation" | **Conversation notes**: after a session that mattered (decisions, plans, an answer you cared about), a short note in `~/Documents/JARVIS/Memory/Conversations/`; sessions of only commands leave nothing |
+| "Jarvis, take notes" … "Jarvis, stop taking notes" | **Meeting notes**: records the mic + the computer's audio, transcribes it locally as it goes (no audio is ever kept), then writes `~/Documents/JARVIS/Notes/<date> <title>.md` (summary, decisions, action items, transcript) and offers reminders for the action items. The pill's stop button works too; 3 h at most |
+| "Find the plumber's invoice from spring" / "Which PDF had the Geonix pricing table?" | **Search inside files** (Documents, Downloads, Desktop, Projects: text, Markdown, code, PDF, docx/odt/xlsx/pptx): JARVIS names the best 1–3 and the pill shows them as cards you can open |
+| *Drag a file, several files, a folder, a link or selected text onto the pill*, then: "Summarise it" / "What's in this picture?" / "What is this?" / "Rename these by date" / "Convert it to PNG" | **Drop on the orb** (section 28): the pill lights up ("DROP TO ASK"), a chip under it shows what you dropped (✕ discards it) and JARVIS listens as if you'd clicked the orb. Only files in your home folder (never dotfiles, `~/.ssh`, `~/.config`, `~/.local`) and http/https links. It is read in memory while you talk: PDFs (`pdftotext`), .docx, text and code, a folder's listing, a web page; pictures go to the 35B with vision ("Let me look, sir." when it is cold). The content is data: it can't make JARVIS run, send, click or close anything by itself; what you ask for in the same sentence still works with its usual card ("save a summary of this to a file", "convert it to PNG" → a command card). Gone when the session ends |
+| **SUPER+SHIFT+X**, drag a box on the screen, then: "What's this error?" / "Translate this" / "What does this chart say?" | **Draw a box and ask** (section 28, `jarvisctl ask-region`): `slurp` + `grim` grab just that box into memory (never a file; Esc = nothing happens), the chip shows a small thumbnail and JARVIS listens; your question goes to the 35B with vision on that crop. Refused (and discarded) if a login, 2FA, password-manager or banking window overlaps the box. Nothing said before the session times out → the crop is gone |
+| "What did I miss?" / "Any notifications?" | **Notifications** (section 27): one or two sentences, grouped and urgent first ("Two emails, one from Anna that looks urgent, and your build finished."). It counts what came in while you were away (no input for 5 min, the screen locked, focus mode or do-not-disturb); the orb's badge shows how many. 2FA codes, passwords and banking alerts are dropped; nothing is stored or logged but the app's name. The text is data: it can't make JARVIS do anything. See *Desktop awareness* below |
+| "Save this as firm work" / "Firm work" / "Load firm work" / "Close firm work" / "End of day" / "What scenes do I have?" / "Delete the scene gaming" | **Scenes**: your workspaces' apps, terminal folders (and Neovim in them) and Zen tabs saved to `~/.config/jarvis/scenes/firm-work.toml` (edit it freely); loading opens only what isn't open yet, each on its workspace; closing closes only what the scene opened, gracefully. Deleting asks first |
+| "Focus for 45 minutes on Geonix" / "Break" / "Resume focus" / "Stop focus" | **Focus mode**: Noctalia's do-not-disturb on (back to how it was afterwards), no daily briefing, reminders only flash the pill (unless urgent; timers still speak), notifications kept for later; at the end a short recap: time, what you mostly worked in, notifications waiting. Survives a jarvisd restart |
+| "What did I do today?" / "How long was I in Neovim today?" / "What was I working on Tuesday afternoon?" / "Write a summary of my day" / "Pause tracking" / "Delete today's log" | **Activity log**: a private, local log of the focused window and idle time (`~/.local/share/jarvis/activity.db`, 30 days). Private windows, password managers, login and banking pages keep only the app's name. The summary goes in the reading panel ("…and save it" makes a file in Documents/JARVIS). Deleting asks first |
 | "That's all" / "Thanks, Jarvis" | Ends the session |
 
 It understands English and Czech. Emails, calendar titles, headlines, web pages, text on the screen and the
@@ -66,7 +76,7 @@ nothing, and computer control, typing and closing apps are refused in a turn tha
 
 ## The pill (top-left)
 
-`[orb] JARVIS [status] | [speaker] [volume bars] [fullscreen]`
+`[orb] JARVIS [status] [● REC 12:35] [focus 27m] | [speaker] [volume bars] [fullscreen] [on/off]`
 
 | Control | Action |
 |---|---|
@@ -76,13 +86,20 @@ nothing, and computer control, typing and closing apps are refused in a turn tha
 | **Volume bars**, scroll | JARVIS's volume in 5 % steps. **Independent of the system volume**: changing or muting the system volume never changes how loud JARVIS is |
 | **Volume bars**, click | A slider popup with the percentage |
 | **Fullscreen** button | Toggle the HUD |
+| **Drop** something on the pill | Files, a folder, a link or selected text: attached to your next question (see *What it can do*); always taken as a copy, never moved |
+| **● REC 12:35** (red, while meeting notes record) | Click: *Stop*. It keeps the pill visible even over fullscreen windows |
+| **Focus** label + minutes (thin outer ring on the orb) | Click or right-click: *Pause focus* / *Resume focus*, *Stop focus*. Paused = amber and dimmed |
+| **Count badge** on the orb (unseen notifications) | Hover: the newest one; click: JARVIS sums them up; right-click menu: *Clear notifications* |
+| **Chip** under the pill | What you dropped or boxed (a thumbnail for pictures and boxes); **✕** discards it |
+| **Results card** under the pill | A file search's top 5 (name, folder, age, a snippet); click a row to open the file; **✕** or a minute without the pointer on it closes it |
 
 What the orb shows: dim breathing = idle, models unloaded ("go to sleep"); brighter with a full thin ring = the voice
 model is loaded (it always is, normally); the ring counts down only while the 35B is loaded (60 s after its last
 use); a thin slash = another app has the mic; flare + spinning arc = waking/loading; pulsing with your voice = listening; rotating
 arc = thinking; pulsing with its voice = speaking; a small orbiting dot = deep mode; amber = waiting for your
-confirmation; three flashes + a slide-out text = a reminder or timer is due; an outline at 40 % = jarvisd isn't
-running. Like the Noctalia bar, the pill hides over fullscreen windows (games, video) unless JARVIS is busy. During the
+confirmation; three flashes + a slide-out text = a reminder or timer is due; a small spark + "REMEMBERED …" (4 s,
+no sound) = something went into its memory; a thin outer ring draining = focus mode's time left (the 35B's countdown
+stays on the orb's own, inner ring); an outline at 40 % = jarvisd isn't running. Like the Noctalia bar, the pill hides over fullscreen windows (games, video) unless JARVIS is busy. During the
 showcase the pill leaves its corner and travels across the screen with a trail of light, and comes home at the end.
 
 **Corners, round or square.** The corner button in the top-right corner of the screen (`ui/CornerToggle.qml`, which
@@ -122,9 +139,9 @@ a second (for a busy GPU); both are read by the UI itself from `~/.config/jarvis
 | ② Messages | a thread: read aloud; **Reply** (shows "not connected" until a messaging provider exists) |
 | ③ Core | same as clicking the orb (session on/off) |
 | ④ Time · weather | 3-day forecast; ⟳ refreshes |
-| ⑤ Today | calendar (if connected), reminders and running timers; click one → **Cancel it** / Keep |
+| ⑤ Today | meeting notes recording (REC, time) and focus mode (time left) on top, then calendar (if connected), reminders and running timers; click a reminder/timer → **Cancel it** / Keep; the REC row → **Stop** / Keep; the focus row → **Pause** (Resume) / **Stop** |
 | ⑥ System · model | per model: FAST `qwen35-4b` "always loaded", DEEP `jarvis` "loads on demand" or its unload countdown (with a bar) while loaded, STT on GPU/RAM; the running coding job; CPU, RAM (and the model's share), VRAM, GPU temperature, disk; **Unload now** |
-| ⑦ Conversation / deep answer | the last 4 exchanges; during deep mode the streamed answer; **Copy** |
+| ⑦ Conversation / deep answer | the last 4 exchanges; during deep mode the streamed answer; **Copy**. A file search's results get a **FOUND** tab (click a file to open it; **Conversation** / **Results** switch); what you dropped on the orb shows as a chip in the header |
 
 A pending draft appears over the core with the same Confirm / Edit / Cancel.
 
@@ -148,6 +165,68 @@ a two-sentence briefing (firm numbers, today's reminders/events, the weather) in
 - **Briefing:** cut it short by saying "stop" or "Jarvis, skip", or with a click; switch it off in the pill's right-click
   menu (**Daily briefing**) or with `[briefing] enabled = false`. It isn't given while JARVIS is muted.
   `jarvisctl raw '{"cmd":"briefing.preview"}'` shows today's text without speaking it.
+
+## Memory and knowledge
+
+Section 26 (`build/26-memory-and-knowledge.md`). Everything stays on this machine, in files you can read.
+
+- **What JARVIS knows about you:** `~/Documents/JARVIS/Memory/facts.md`, under `## Preferences`, `## People`,
+  `## Work & projects`, … one line per fact (`- 2026-10-09 — Anna's birthday is March 4th.`). Edit, move or delete
+  lines freely; JARVIS rereads the file when it changes. The first ~350 tokens of it (preferences first) are in every
+  conversation's prompt; the rest is looked up when you ask. A fact you repeat refreshes its date; a new value for
+  the same thing ("the car is on level 5") replaces the old line. "Forget that" removes the last one it saved,
+  "forget the router thing" the matching one.
+- **Automatic:** after each session, if it was more than commands and small talk, the fast model (or the 35B if it
+  is already loaded; never while a coding job or computer control runs) decides whether it is worth a note and
+  pulls out lasting facts you stated yourself. A fact must be in your own words: JARVIS's answers about emails, pages,
+  files, the screen or the clipboard never reach it. Passwords, PINs, 2FA codes, keys and card numbers are refused.
+  A small spark on the pill (`memory.saved`) shows when something was saved. "Don't remember this conversation" /
+  "off the record" drops the whole conversation (and deletes its note if one was written).
+- **Recall:** "What did I tell you about the router?", "What did we talk about yesterday?" search facts and
+  conversation notes (SQLite FTS5 in `~/.local/share/jarvis/memory.db`; dates like "yesterday", "last week",
+  "in March", "spring").
+- **Meeting notes:** "Jarvis, take notes" records the mic (JARVIS's echo-cancelled one) and the computer's audio with
+  `pw-record`, transcribes ~28 s chunks with the local Whisper as it goes and keeps only text. "Jarvis, stop taking
+  notes", the pill's stop button, or 3 hours end it. The notes are written by the 35B (or the fast model in chunks
+  while a coding job runs) to `~/Documents/JARVIS/Notes/`; then "Want reminders for the N action items?" (a card;
+  "yes" or Confirm sets them, due when they were said to be due, else tomorrow 09:00). If a call app has the mic,
+  JARVIS doesn't listen for its name, but saying "Jarvis, stop taking notes" is still caught in the recording.
+- **Search inside files:** a background pass (lowest priority, incremental) indexes Documents, Downloads, Desktop and
+  Projects into `~/.local/share/jarvis/content.db` (never hidden folders, symlinks, dependency/build trees; PDFs
+  via `pdftotext`). The first pass runs 2 minutes after jarvisd starts, then every 30 minutes. Try it by hand:
+  `uv run python -m jarvis.integrations.content_index build --db /tmp/c.db` then `… search --db /tmp/c.db geonix`.
+- **Switches:** `[memory] enabled / auto_facts / conversation_notes`, `[meeting] enabled / max_minutes /
+  system_audio`, `[search] enabled / roots`. `uv run python -m jarvis.memory list|block|recall …` shows what it
+  knows, read-only.
+
+## Desktop awareness
+
+Section 27 (`build/27-desktop-awareness.md`). Read-only towards the desktop except where you ask (loading/closing a
+scene, focus mode's do-not-disturb), and nothing leaves the machine.
+
+- **Notifications:** jarvisd listens to `org.freedesktop.Notifications.Notify` on the session bus (a D-Bus monitor: it
+  never answers, closes or clicks a notification; if it can't, it reads Noctalia's
+  `~/.local/state/noctalia/notification_history.json` instead, which also brings back what came in while jarvisd was
+  down). Kept in memory only, 12 h. "Away" = no window change, no mouse movement and no JARVIS turn for 5 min
+  (`[activity] idle_after_s`; key presses can't be seen: JARVIS isn't in the `input` group), the screen locked
+  (hyprlock), focus mode, or do-not-disturb. The first-wake briefing adds "3 notifications while you were away, …".
+  The pill's badge (`notify.unseen`), its click (`notify.summary`) and *Clear* (`notify.clear`).
+- **Scenes:** a scene file has one `[[app]]` block per window: `workspace`, `class`, `entry` (the desktop entry),
+  `cwd`, `command` (what runs in the terminal, e.g. `nvim`), `urls`. Loading runs only installed apps' own commands
+  (or an installed app's program as `command`), http/https links and folders under your home (never hidden ones), each
+  with `hl.dsp.exec_cmd(…, { workspace = "N silent" })`; a window that opens elsewhere (Zen already running) is moved.
+  Zen's tabs come from its session file (`sessionstore-backups/recovery.jsonlz4`, so only while Zen runs); private
+  windows and login/bank tabs are skipped. What a load opened is in `~/.local/share/jarvis/scenes-open.json`.
+- **Focus mode:** `noctalia msg notification-dnd-set on|off` (only if it was off before; restored after, and during a
+  break). `~/.local/share/jarvis/focus.json` keeps it across restarts. The pill's focus ring and the HUD's Today row
+  (`focus.state`, `focus.pause`, `focus.stop`).
+- **Activity log:** Hyprland's event socket (re-found after a Hyprland restart), the cursor every 20 s, hyprlock for
+  "locked". `uv run python -m jarvis.integrations.activity today` (or `tuesday afternoon`) prints what it holds.
+  Other code can ask `jarvis.integrations.activity.summary(start_ts, end_ts)` / `app_time(app, start_ts, end_ts)`.
+- **Switches:** `[notifications] enabled / source / ignore_apps / keep_hours / briefing`, `[focus] enabled /
+  default_minutes / dnd / quiet_reminders`, `[activity] enabled / retention_days / idle_after_s / private_classes`,
+  `[scenes] enabled / dir / launch_timeout_s / max_urls`. `uv run scripts/awareness_live_check.py` checks the fast
+  model's routing with stand-in tools (nothing runs).
 
 ## What still needs you
 
@@ -261,7 +340,11 @@ curl -s 127.0.0.1:8401/running                     # which models are loaded
 | `~/.local/share/jarvis/outbox.log` | one line per sent email/message: time, channel, recipient, subject (never the body) |
 | `~/.local/state/jarvis/state.json` | volume, mute, ducking, brain choice, and restore snapshots for ducked apps |
 | `~/.local/share/jarvis/coding/current.json` | the running (or last) coding job |
+| `~/.local/share/jarvis/activity.db`, `focus.json`, `scenes-open.json` | the activity log (30 days), focus mode's state, what a loaded scene opened |
+| `~/.config/jarvis/scenes/*.toml` | your saved scenes (editable) |
 | `~/Documents/JARVIS/`, `~/Pictures/Screenshots/`, `~/Projects/<name>/` | files JARVIS created, screenshots, coding projects |
+| `~/Documents/JARVIS/Memory/` (`facts.md`, `Conversations/`), `~/Documents/JARVIS/Notes/` | section 26: what JARVIS remembers, conversation notes, meeting notes (all editable Markdown) |
+| `~/.local/share/jarvis/memory.db`, `content.db` | search indexes for memory and file contents (safe to delete; rebuilt) |
 | `~/.config/llama-swap/config.yaml` | the models llama-swap serves |
 | `~/models/` | the GGUF models, Kokoro voice files |
 | `$XDG_RUNTIME_DIR/jarvis.sock` | the IPC socket (the UI and `jarvisctl` talk to it) |
@@ -296,6 +379,7 @@ and restart jarvisd. The sections:
 | `[wake]` | `model` (`jarvis:0.06, hey_jarvis:0.5`), `verify` (Whisper double-check), thresholds |
 | `[audio]` | `mic`, `echo_cancel`, `duck_enabled` and ducking levels, `vad_silence_ms` (end-of-turn silence), `barge_in`, `stop_words`, `mic_busy` (+ `mic_busy_ignore`), `addressed_check` |
 | `[desktop]` / `[files]` | app launcher, screenshot folder, lock command, app aliases; file roots, default folder, size limits |
+| `[memory]` / `[meeting]` / `[search]` | section 26: `enabled`, `auto_facts`, `conversation_notes`, `prompt_chars`; `max_minutes`, `system_audio`, `mic_source`, `summary_model`; `roots`, `refresh_min`, size caps |
 | `[stt]` / `[tts]` | Whisper model/device; Kokoro `voice`, `speed` |
 | `[email]` / `[contacts]` | Gmail hosts, `primary_only`; phone region |
 | `[computer]` | computer control: `enabled`, `max_steps` (40), `max_seconds` (300), `image_width` (1280), `settle_s`, `takeover_mouse_px`, `debug_screenshots` (off: screenshots never touch the disk) |
@@ -303,6 +387,7 @@ and restart jarvisd. The sections:
 | `[weather]` / `[calendar]` / `[reminders]` / `[system]` | location fallback; `ics_url`; missed-reminder grace; what counts as the model's RAM |
 | `[showcase]` | `enabled`, `style` (`"cinematic"` / `"script"`), `mute` (true: nothing spoken, the steps still run); cinematic: `terminal`, `browser`, `fresh_workspace`, `workspace_settle_s`, `takeover` (+ `_grace_s`, `_mouse_px`), `close_grace_s`, `scroll`, `code_cps`; script: `script` ("" = `~/.config/jarvis/showcase.toml`) |
 | `[coding]` | `model` (Ollama tag), `num_ctx` (32768), `projects_dir`, `terminal`, `min_free_vram_gb` (6), `game_classes` |
+| `[notifications]` / `[focus]` / `[activity]` / `[scenes]` | section 27: notification source and ignored apps; focus length, DND, quiet reminders; activity log on/off, retention, idle time, private classes; the scenes folder |
 | `[ui]` | read by the UI (`ui/Theme.qml`), not jarvisd, and applied live: `reduce_motion` (false), `lean` (false: the HUD's continuous motion on a 30 Hz clock, fewer sparks) |
 
 ### The cinematic showcase (section 25)

@@ -16,6 +16,7 @@ place, `ui/Theme.qml`; no other UI file contains a hex colour. Re-check against 
 | `text` | `#e4e6e0` | Input text (render) |
 | `textMuted` | `#b8bbb2` | Labels and descriptions (render) |
 | `warn` (awaiting confirm) | `#d9b36c` | Derived: a warm amber with the same lightness as `primary` |
+| `rec` (meeting notes recording, section 28) | `#e5483f` → 20 % toward `error` | Fixed like `warn`: a recording must read as red on any wallpaper (the wallpaper's `error` can come out mauve) |
 | `error` | `#e0806c` | Derived: a muted terracotta that sits with the greens |
 
 Last extraction (2026-09-25): every token above except `text` appears exactly in the render or the manifest.

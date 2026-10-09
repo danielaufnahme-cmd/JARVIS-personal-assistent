@@ -416,6 +416,72 @@ step_vram_need_mb = 5000       # the same for a small step model
 direct = true                  # "open X", "search the web for Y", "open YouTube and ..." start with open_app / open_url
 search_url = "https://duckduckgo.com/?q={q}"   # Zen's search engine
 
+# Section 26: memory and knowledge (build/26-memory-and-knowledge.md).
+[memory]                       # "Remember the car is on level 3" / "What do you know about me?" / "What did we talk about yesterday?"
+enabled = true                 # the memory tool and the small "what I know about you" block in the prompt
+auto_facts = true              # after a session: save lasting facts/preferences the user stated in their own words
+conversation_notes = true      # after a session: a short note of conversations worth keeping (commands never)
+folder = "~/Documents/JARVIS/Memory"   # facts.md (edit it freely) + Conversations/
+prompt_chars = 1400            # cap of the prompt block (~350 tokens); preferences first
+
+[meeting]                      # "Jarvis, take notes" / "stop taking notes": mic + system audio, transcribed locally
+enabled = true
+max_minutes = 180              # it stops by itself after this
+chunk_s = 28                   # transcribed in chunks as it goes; audio is never written to disk
+mic_source = ""                # "" = JARVIS's echo-cancelled mic if loaded, else the default source
+system_audio = true            # also the computer's audio (the other side of a call)
+folder = "~/Documents/JARVIS/Notes"
+summary_model = "auto"         # "auto": the 35B unless a coding job / computer control runs, else the fast model in chunks; "fast"
+summary_timeout_s = 600
+
+[search]                       # "Find the plumber's invoice from spring": file contents, SQLite FTS5 in ~/.local/share/jarvis/content.db
+enabled = true
+roots = ["~/Documents", "~/Downloads", "~/Desktop", "~/Projects"]   # never hidden folders, symlinks or build/dependency trees
+refresh_min = 30               # a background pass (lowest priority, incremental by mtime) this often
+first_delay_s = 120            # the first pass after jarvisd starts
+max_text_bytes = 2000000       # text/markdown/code files bigger than this are skipped
+max_doc_bytes = 30000000       # PDF (pdftotext) and docx/odt/xlsx/pptx
+max_chars = 200000             # text kept per file
+max_files = 50000
+pdf_pages = 50
+
+# Section 27: desktop awareness (build/27-desktop-awareness.md).
+[notifications]                # "What did I miss?": desktop notifications, read-only, kept in memory only
+enabled = true
+source = "auto"                # "auto" (D-Bus monitor, else Noctalia's history file) | "dbus" | "noctalia"
+ignore_apps = ["hyprvoice", "jarvis"]   # never counted (lower-case app name or desktop entry, substring match)
+keep_hours = 12                # forget notices older than this
+max_items = 100
+briefing = true                # the first-wake briefing mentions what was missed
+
+[focus]                        # "Focus for 45 minutes on Geonix"
+enabled = true
+default_minutes = 45
+dnd = true                     # turn on Noctalia's do-not-disturb while focused (restored afterwards)
+quiet_reminders = true         # reminders only flash the pill while focused (unless urgent); timers are still spoken
+
+[activity]                     # "What did I do today?": focused window + idle, ~/.local/share/jarvis/activity.db
+enabled = true                 # false: nothing is recorded (idle detection for "away" still runs, nothing stored)
+retention_days = 30
+idle_after_s = 300             # no window change, cursor movement or JARVIS turn for this long = idle / away
+cursor_poll_s = 20
+private_classes = []           # window classes whose titles are never stored (password managers etc. always)
+
+[scenes]                       # "Save this as firm work" / "firm work" / "end of day"
+enabled = true
+dir = ""                       # "" = ~/.config/jarvis/scenes
+launch_timeout_s = 15          # how long a restored app may take to show its window
+max_urls = 30                  # browser tabs saved per window
+
+[attach]                       # section 28: drop files/links/text on the orb; SUPER+SHIFT+X draws a box and asks
+enabled = true
+max_items = 8                  # per drop
+max_chars = 6000               # extracted text per turn, across all items (PDF via pdftotext, .docx, text, folders, pages)
+max_images = 3                 # pictures the vision model (the 35B) looks at per turn
+max_file_mb = 25               # bigger files: only their name, size and date
+pdf_pages = 30
+region_max_kb = 700            # the boxed crop travels base64 in one IPC line (jarvisd caps a line at 1 MiB)
+
 [ui]                           # read by the UI itself (ui/Theme.qml watches ~/.config/jarvis/config.toml), not by jarvisd
 reduce_motion = false          # true: the HUD and the showcase drop their motion (no drift, sparks, sheens, count-ups)
 lean = false                   # true: same look, but continuous motion steps on a 30 Hz clock and the heavy effects thin out

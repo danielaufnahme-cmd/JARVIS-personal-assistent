@@ -58,6 +58,11 @@ hooks = """
     property alias hFs: fsButton
     property alias hPower: powerButton
     property alias hTip: powerTip
+    property alias hRec: recSeg
+    property alias hFocus: focusSeg
+    property alias hBadge: badge
+    property alias hBadgeTip: badgeTip
+    property alias hRecPopup: recPopup
 """
 k = s.rstrip().rfind("}")
 s = s[:k] + hooks + "}\n"

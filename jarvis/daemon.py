@@ -90,6 +90,9 @@ class Daemon:
             with_history=self.llm.gpu_mode == "resident" or self.session.keeps_context())
         self.ipc = IPCServer(self.bus, self.socket_path, self.snapshot)
         self.voice: Any = None  # section 5: mic, wake word, STT, TTS (see start())
+        from .integrations.knowledge import Knowledge
+
+        self.knowledge = Knowledge(self)  # section 26: conversation memory, meeting notes, file contents search
 
     # --- protocol ---------------------------------------------------------
 
@@ -104,6 +107,10 @@ class Daemon:
             "job": self._job(),  # section 15: the running (or last) coding job, same shape as the `job` event
             "computer": self._computer(),  # section 19: {"active", "goal"} while JARVIS drives mouse/keyboard
             "showcase": self._showcase(),  # sections 24/25: {"active", "lang"} while "present yourself" runs
+            "attach": self._attach(),  # section 28: {"items": [{kind, name, thumb}]} dropped on the orb / boxed
+            "meeting": self.knowledge.meeting_state(),  # section 26: {"active", "started_at", "title"}
+            "notify": self._awareness("notify"),  # section 27: {"count", "top"} missed notifications
+            "focus": self._awareness("focus"),  # section 27: the focus.state shape
             # section 13: another app (dictation, a call) records the mic, so JARVIS isn't listening
             "mic_busy": ({k: v for k, v in self.voice.mic_busy_status().items() if k in ("busy", "apps")}
                          if self.voice is not None else {"busy": False, "apps": []}),
@@ -156,6 +163,18 @@ class Daemon:
         from .showcase import any_running, running_lang
 
         return {"active": any_running(), "lang": running_lang()}
+
+    @staticmethod
+    def _awareness(key: str) -> dict[str, Any]:
+        from .integrations.awareness import snapshot_focus, snapshot_notify
+
+        return snapshot_notify() if key == "notify" else snapshot_focus()
+
+    @staticmethod
+    def _attach() -> dict[str, Any]:
+        from .integrations.attachments import ATTACHMENTS
+
+        return ATTACHMENTS.state()
 
     @staticmethod
     def _computer() -> dict[str, Any]:
@@ -255,6 +274,9 @@ class Daemon:
     def register_commands(self) -> None:
         bus = self.bus
         self.session.register(bus)
+        from .integrations.attachments import register as register_attachments
+
+        register_attachments(bus, self.session, self.cfg)  # section 28: attach.add / attach.clear / region.ask
         self.gate.register(bus)  # draft.confirm / draft.cancel / draft.edit
 
         async def say(cmd: dict[str, Any]) -> None:
@@ -334,6 +356,7 @@ class Daemon:
         bus.handle("llm.brain.get", brain_get)
         bus.handle("llm.fast.set", fast_set)
         bus.handle("llm.fast.gpu_mode", gpu_mode)
+        self.knowledge.register(bus)  # section 26: search.open, meeting.stop
 
     def _spawn(self, coro: Any, name: str) -> None:
         task = asyncio.create_task(coro, name=name)
@@ -396,6 +419,14 @@ class Daemon:
         for task in start_firm_background(self.bus, self.cfg):  # section 18: the firm's numbers, every 15 min
             self._tasks.add(task)
             task.add_done_callback(self._tasks.discard)
+        from .integrations.awareness import start_awareness
+
+        for task in start_awareness(  # section 27: notifications, focus mode, the activity log (scenes: tools)
+            self.bus, self.cfg,
+            voice_ready=lambda: self.voice is None or bool(getattr(self.voice, "ready", False)),
+        ):
+            self._tasks.add(task)
+            task.add_done_callback(self._tasks.discard)
         from .briefing import start_briefing
 
         briefing = start_briefing(self.bus, self.cfg)  # section 18: once a day, on the first wake/click
@@ -405,6 +436,7 @@ class Daemon:
             # Loading Whisper/Kokoro takes a few seconds; the socket (and typed input) is up meanwhile.
             self._spawn(self._start_voice(), "voice-start")
         self._spawn(self._prebuild_slot(), "slot-prebuild")
+        self.knowledge.start()  # section 26: the session-end watch, a crashed meeting's transcript, the file index
 
     async def _prebuild_slot(self, delay_s: float = 20.0) -> None:
         """Section 20: the first on-demand load after a prompt/tool change prefills ~8k tokens and saves them (5 s
@@ -443,6 +475,10 @@ class Daemon:
             except Exception:
                 log.exception("closing the voice pipeline failed")
         await self.ipc.close()
+        try:
+            await self.knowledge.close()  # section 26: a running meeting keeps its transcript (never audio)
+        except Exception:
+            log.exception("closing memory/meeting/search failed")
         for task in list(self._tasks):
             task.cancel()
         await asyncio.gather(*self._tasks, return_exceptions=True)

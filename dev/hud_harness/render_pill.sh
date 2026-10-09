@@ -11,7 +11,7 @@ mkdir -p "$work/qs"
 python3 "$here/gen_theme.py" "$ui/Theme.qml" "$work/qs/Theme.qml"
 python3 "$here/gen_pill.py" "$ui/CornerPill.qml" "$work/qs/CornerPill.qml"
 printf 'module qs\nsingleton Theme 1.0 Theme.qml\nCornerPill 1.0 CornerPill.qml\n' > "$work/qs/qmldir"
-for f in Orb SpeakerIcon PillTravel; do ln -sf "$ui/$f.qml" "$work/qs/$f.qml"; done
+for f in Orb SpeakerIcon PillTravel PillButton; do ln -sf "$ui/$f.qml" "$work/qs/$f.qml"; done
 out="$(realpath -m "${1:-pill.png}")"
 cd "$here"
 QT_FORCE_STDERR_LOGGING=1 QML_XHR_ALLOW_FILE_READ=1 QT_QPA_PLATFORM=offscreen timeout 30 \

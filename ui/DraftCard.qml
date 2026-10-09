@@ -19,8 +19,10 @@ PanelWindow {
         top: true
         left: true
     }
+    // Section 28: below the dock (attachment chip, search results) when it shows.
+    property real stackOffset: 0
     margins {
-        top: Theme.barTop + Theme.pillHeight + 8
+        top: Theme.barTop + Theme.pillHeight + 8 + stackOffset
         left: Theme.pillLeft
     }
     implicitWidth: Theme.cardWidth

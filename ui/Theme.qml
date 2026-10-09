@@ -139,6 +139,9 @@ Singleton {
     // The confirm state must read as "attention" on any wallpaper, so it stays a warm amber,
     // nudged a little toward the wallpaper accent so it still belongs to the palette.
     readonly property color warn: mix("#d9b36c", primary, 0.15)
+    // Section 28: a recording (meeting notes) must read as RED on any wallpaper (the palette's `error` can come out
+    // mauve), so it is fixed like `warn`, nudged a little toward the palette's error tone.
+    readonly property color rec: mix("#e5483f", error, 0.2)
 
     // Derived tones, computed from the tokens above rather than hard-coded.
     readonly property color primaryDeep: mix(primary, bg, 0.62)

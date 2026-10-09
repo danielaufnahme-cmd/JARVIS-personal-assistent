@@ -50,11 +50,60 @@ PanelWindow {
     // whenever JARVIS is doing something the user needs to see.
     // Not monitorFor(screen): hiding the window changes `screen`, which re-triggers this binding (a loop).
     readonly property bool fullscreenBelow: Hyprland.focusedMonitor?.activeWorkspace?.hasFullscreen ?? false
+    // Section 28: a meeting being recorded keeps the pill up even over a fullscreen window (a recording must never
+    // be hidden); focus, the notification badge and the attachment chip don't by themselves.
     readonly property bool jarvisActive: ipc.sessionActive || ipc.mode !== "idle" || ipc.draft !== null
-        || ipc.hudOpen || alertBubble.shown || ipc.showcaseActive || travel.away
+        || ipc.hudOpen || alertBubble.shown || ipc.showcaseActive || travel.away || recording || dropHover
     visible: !fullscreenBelow || jarvisActive
 
     readonly property bool online: ipc.connected
+
+    // ── section 28: drop target, meeting REC, focus, notifications ──
+    property bool dropHover: false
+    readonly property bool recording: online && !!ipc.meeting
+    readonly property var focusInfo: online ? ipc.focusState : null
+    property double now: Date.now()
+    property bool blink: true              // the REC dot's slow blink (steady with reduce_motion)
+    Timer {
+        interval: 1000
+        repeat: true
+        triggeredOnStart: true
+        running: (win.recording || !!win.focusInfo) && win.visible
+        onTriggered: {
+            win.now = Date.now();
+            win.blink = Theme.reduceMotion || !win.blink;
+        }
+    }
+    readonly property real focusLeftMs: !focusInfo ? 0 : focusInfo.paused ? focusInfo.pausedLeftMs : Math.max(0, focusInfo.endsAt - now)
+    readonly property real focusFrac: !focusInfo || !focusInfo.endsAt ? -1
+        : Math.max(0, Math.min(1, focusLeftMs / Math.max(60000, focusInfo.endsAt - (focusInfo.startedAt || focusInfo.endsAt - 3600000))))
+    function focusTime(ms) {
+        const m = Math.ceil(ms / 60000);
+        return m >= 100 ? Math.floor(m / 60) + "h" + String(m % 60).padStart(2, "0") : m + "m";
+    }
+    function elapsed(fromMs) {
+        const s = Math.max(0, Math.floor((now - fromMs) / 1000));
+        const mmss = String(Math.floor(s / 60) % 60).padStart(2, "0") + ":" + String(s % 60).padStart(2, "0");
+        return s >= 3600 ? Math.floor(s / 3600) + ":" + mmss : mmss;
+    }
+    // A drop: links and files go as URIs, plain text as text. Always a copy (see the DropArea).
+    function dropPayload(urls, text) {
+        const uris = [];
+        for (let i = 0; i < (urls ? urls.length : 0) && uris.length < 32; i++)
+            uris.push(String(urls[i]));
+        const t = String(text || "").trim();
+        if (uris.length === 0 && /^https?:\/\/\S+$/.test(t))
+            uris.push(t);
+        return { cmd: "attach.add", uris: uris, text: uris.length === 0 && t !== "" ? String(text).slice(0, 20000) : null };
+    }
+    Connections {
+        target: win.ipc
+        function onMemorySaved(kind, text) {
+            orb.spark();
+            const label = kind === "forgot" ? "forgot" : kind === "conversation" ? "saved" : "remembered";
+            alertBubble.show(text, label, 4000);
+        }
+    }
 
     // Section 12: the voice brain ("fast" small model / "smart" 35B) for the menu's check mark. Ipc.qml keeps
     // only the countdown fields of the model event, so ask the daemon (on connect and whenever the menu opens).
@@ -108,6 +157,13 @@ PanelWindow {
         win.wakeOff = off;
         win.ipc.send({ cmd: off ? "wake.mute" : "wake.unmute" });
     }
+    function toggleMenu() {
+        if (!menu.visible) {
+            win.ipc.send({ cmd: "llm.brain.get" });
+            win.ipc.send({ cmd: "briefing.get" });
+        }
+        menu.visible = !menu.visible;
+    }
 
     readonly property string mode: ipc.mode
     readonly property color accent: ipc.inControl || mode === "awaiting_confirm" || dimmed ? Theme.warn
@@ -116,6 +172,8 @@ PanelWindow {
     readonly property string statusText: {
         if (!online)
             return "";
+        if (dropHover)
+            return "DROP TO ASK";  // section 28: something is being dragged over the pill
         if (ipc.inControl)
             return "IN CONTROL";  // section 19: JARVIS drives the mouse and keyboard (say "stop", Esc or move the mouse)
         if (ipc.showcaseActive)
@@ -183,10 +241,11 @@ PanelWindow {
         property string label: ""
         property string kind: ""
         property bool shown: false
-        function show(t, k) {
+        function show(t, k, ms) {
             label = t;
             kind = k;
             shown = true;
+            alertTimer.interval = ms || 8000;   // section 28: a remembered fact shows for 4 s
             alertTimer.restart();
         }
         readonly property real maxW: win.width - pill.width - 8
@@ -211,6 +270,7 @@ PanelWindow {
             x: 13
             spacing: 8
             Text {
+                id: alertKind
                 anchors.verticalCenter: parent.verticalCenter
                 text: (alertBubble.kind || "alert").toUpperCase()
                 color: Theme.primary
@@ -221,7 +281,7 @@ PanelWindow {
             }
             Text {
                 anchors.verticalCenter: parent.verticalCenter
-                width: Math.min(implicitWidth, alertBubble.maxW - 70)
+                width: Math.min(implicitWidth, alertBubble.maxW - alertKind.implicitWidth - 34)
                 elide: Text.ElideRight
                 text: alertBubble.label
                 color: Theme.text
@@ -242,12 +302,51 @@ PanelWindow {
         height: Theme.pillHeight
         width: content.width
         radius: Theme.pillRadius
-        border.width: 1
-        border.color: win.online && win.ipc.sessionActive ? Theme.alpha(win.accent, 0.55) : Theme.outline
+        border.width: win.dropHover ? 1.5 : 1
+        border.color: win.dropHover ? Theme.primaryBright
+            : win.online && win.ipc.sessionActive ? Theme.alpha(win.accent, 0.55) : Theme.outline
         Behavior on border.color { ColorAnimation { duration: Theme.animSlow } }
         gradient: Gradient {
             GradientStop { position: 0.0; color: Theme.surfaceRaised }
             GradientStop { position: 1.0; color: Qt.darker(Theme.surfaceRaised, 1.1) }
+        }
+
+        // Section 28: something dragged over the pill lights it from inside (the surface is only as tall as the pill,
+        // so the glow can't spill outside it).
+        Rectangle {
+            anchors.fill: parent
+            anchors.margins: 1.5
+            radius: Math.max(0, pill.radius - 1.5) * Theme.round
+            opacity: win.dropHover ? 1 : 0
+            visible: opacity > 0.01
+            Behavior on opacity { NumberAnimation { duration: Theme.animFast } }
+            gradient: Gradient {
+                orientation: Gradient.Horizontal
+                GradientStop { position: 0.0; color: Theme.alpha(Theme.primary, 0.28) }
+                GradientStop { position: 0.5; color: Theme.alpha(Theme.primary, 0.10) }
+                GradientStop { position: 1.0; color: Theme.alpha(Theme.primary, 0.03) }
+            }
+        }
+
+        // Drop anything here: files, a folder, a link, selected text. Accepted as a COPY only: an accepted move would
+        // make the file manager delete the source.
+        DropArea {
+            id: dropArea
+            anchors.fill: parent
+            enabled: win.online
+            onEntered: drag => {
+                drag.accept(Qt.CopyAction);
+                win.dropHover = true;
+            }
+            onExited: win.dropHover = false
+            onDropped: drop => {
+                win.dropHover = false;
+                const msg = win.dropPayload(drop.hasUrls ? drop.urls : [], drop.hasText ? drop.text : "");
+                if (msg.uris.length > 0 || msg.text !== null) {
+                    drop.accept(Qt.CopyAction);
+                    win.ipc.send(msg);
+                }
+            }
         }
 
         // A hairline of light along the top edge, so the pill has a little depth.
@@ -262,8 +361,8 @@ PanelWindow {
         Item {
             id: content
             height: parent.height
-            width: sessionArea.width + divider.width + 6 + volButton.width + levelButton.width + fsButton.width
-                + powerButton.width + 3
+            width: sessionArea.width + recSeg.width + focusSeg.width + divider.width + 6 + volButton.width
+                + levelButton.width + fsButton.width + powerButton.width + 3
 
             // Orb + wordmark (+ status) are one button.
             Item {
@@ -299,6 +398,8 @@ PanelWindow {
                     hovered: sessionMouse.containsMouse
                     micBusy: win.ipc.micBusy
                     inControl: win.ipc.inControl
+                    focusFrac: win.focusFrac
+                    focusPaused: !!win.focusInfo && win.focusInfo.paused
                     opacity: !win.online ? 0.4 : win.dimmed && !sessionMouse.containsMouse ? 0.55 : 1   // eased in Orb.qml
                 }
 
@@ -366,22 +467,187 @@ PanelWindow {
                     acceptedButtons: Qt.LeftButton | Qt.RightButton
                     cursorShape: Qt.PointingHandCursor
                     onClicked: mouse => {
-                        if (mouse.button === Qt.RightButton) {
-                            if (!menu.visible) {
-                                win.ipc.send({ cmd: "llm.brain.get" });
-                                win.ipc.send({ cmd: "briefing.get" });
-                            }
-                            menu.visible = !menu.visible;
-                        }
+                        if (mouse.button === Qt.RightButton)
+                            win.toggleMenu();
                         else
                             win.ipc.send({ cmd: "session.toggle" });
                     }
+                }
+
+                // Section 28: unseen notifications, a count on the orb's shoulder. Hover: the newest; click: JARVIS
+                // sums them up; the right-click menu clears them.
+                Rectangle {
+                    id: badge
+                    z: 2
+                    visible: win.online && win.ipc.notifyCount > 0
+                    x: orb.x + orb.width - width + 3
+                    y: 2
+                    height: 13
+                    width: Math.max(height, badgeText.implicitWidth + 7)
+                    radius: (height / 2) * Theme.round
+                    color: badgeMouse.containsMouse ? Theme.primaryBright : Theme.primary
+                    border.width: 1.5
+                    border.color: Theme.surfaceRaised
+                    Text {
+                        id: badgeText
+                        anchors.centerIn: parent
+                        anchors.verticalCenterOffset: 0.5
+                        text: win.ipc.notifyCount > 99 ? "99+" : String(win.ipc.notifyCount)
+                        color: Theme.textOnPrimary
+                        font.family: Theme.fontMono
+                        font.pixelSize: 8
+                        font.weight: Font.Bold
+                    }
+                    MouseArea {
+                        id: badgeMouse
+                        anchors.fill: parent
+                        anchors.margins: -2
+                        hoverEnabled: true
+                        acceptedButtons: Qt.LeftButton | Qt.RightButton
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: mouse => {
+                            if (mouse.button === Qt.RightButton)
+                                win.toggleMenu();
+                            else
+                                win.ipc.send({ cmd: "notify.summary" });
+                        }
+                        onContainsMouseChanged: {
+                            badge.tipShown = false;
+                            if (containsMouse)
+                                badgeTipDelay.restart();
+                        }
+                    }
+                    property bool tipShown: false
+                    Timer {
+                        id: badgeTipDelay
+                        interval: 350
+                        onTriggered: badge.tipShown = badgeMouse.containsMouse
+                    }
+                }
+            }
+
+            // Section 28: meeting notes are recording: a red dot and the time since they started. Click → Stop.
+            Item {
+                id: recSeg
+                anchors.left: sessionArea.right
+                height: parent.height
+                clip: true
+                width: win.recording ? recRow.implicitWidth + 16 : 0
+                Behavior on width {
+                    enabled: !Theme.reduceMotion
+                    NumberAnimation { duration: Theme.animMed; easing.type: Easing.OutCubic }
+                }
+                Rectangle {
+                    anchors.fill: parent
+                    anchors.margins: 3
+                    radius: (height / 2) * Theme.round
+                    color: Theme.alpha(Theme.rec, recMouse.pressed ? 0.16 : 0.1)
+                    opacity: recMouse.containsMouse || recPopup.visible ? 1 : 0
+                    Behavior on opacity { NumberAnimation { duration: Theme.animFast } }
+                }
+                Row {
+                    id: recRow
+                    x: 8
+                    anchors.verticalCenter: parent.verticalCenter
+                    spacing: 6
+                    Rectangle {
+                        anchors.verticalCenter: parent.verticalCenter
+                        width: 7
+                        height: 7
+                        radius: 3.5 * Theme.round
+                        color: Theme.rec
+                        opacity: win.blink ? 1 : 0.3
+                        Behavior on opacity {
+                            enabled: !Theme.reduceMotion && !Theme.lean
+                            NumberAnimation { duration: 450; easing.type: Easing.InOutSine }
+                        }
+                    }
+                    Text {
+                        anchors.verticalCenter: parent.verticalCenter
+                        anchors.verticalCenterOffset: 0.5
+                        text: win.recording ? win.elapsed(win.ipc.meeting.startedAt) : ""
+                        color: Theme.text
+                        font.family: Theme.fontMono
+                        font.pixelSize: 10
+                        font.weight: Font.Medium
+                        font.letterSpacing: 0.6
+                        font.features: { "tnum": 1 }
+                    }
+                }
+                MouseArea {
+                    id: recMouse
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: recPopup.visible = !recPopup.visible
+                }
+            }
+
+            // Section 28: focus mode: its label and the minutes left (the ring is on the orb). With a mode label
+            // showing, only the minutes stay, so the pill keeps clear of the bar.
+            Item {
+                id: focusSeg
+                anchors.left: recSeg.right
+                height: parent.height
+                clip: true
+                readonly property bool compact: win.statusText !== "" || win.recording
+                readonly property color tone: win.focusInfo && win.focusInfo.paused ? Theme.warn : Theme.primaryBright
+                width: win.focusInfo ? focusRow.implicitWidth + 16 : 0
+                Behavior on width {
+                    enabled: !Theme.reduceMotion
+                    NumberAnimation { duration: Theme.animMed; easing.type: Easing.OutCubic }
+                }
+                Rectangle {
+                    anchors.fill: parent
+                    anchors.margins: 3
+                    radius: (height / 2) * Theme.round
+                    color: Theme.alpha(Theme.text, focusMouse.pressed ? 0.09 : 0.05)
+                    opacity: focusMouse.containsMouse ? 1 : 0
+                    Behavior on opacity { NumberAnimation { duration: Theme.animFast } }
+                }
+                Row {
+                    id: focusRow
+                    x: 8
+                    anchors.verticalCenter: parent.verticalCenter
+                    spacing: 6
+                    opacity: win.focusInfo && win.focusInfo.paused ? 0.75 : 1
+                    Text {
+                        visible: !focusSeg.compact && text !== ""
+                        anchors.verticalCenter: parent.verticalCenter
+                        width: Math.min(implicitWidth, 104)
+                        elide: Text.ElideRight
+                        textFormat: Text.PlainText
+                        text: win.focusInfo ? win.focusInfo.label : ""
+                        color: win.focusInfo && win.focusInfo.paused ? Theme.warn : Theme.text
+                        font.family: Theme.fontUi
+                        font.pixelSize: 11
+                    }
+                    Text {
+                        anchors.verticalCenter: parent.verticalCenter
+                        anchors.verticalCenterOffset: 0.5
+                        text: !win.focusInfo ? "" : (win.focusInfo.paused ? "\uf04c " : focusSeg.compact ? "\uf192 " : "")
+                            + win.focusTime(win.focusLeftMs)
+                        color: focusSeg.tone
+                        font.family: Theme.fontMono
+                        font.pixelSize: 10
+                        font.weight: Font.Medium
+                        font.letterSpacing: 0.6
+                        font.features: { "tnum": 1 }
+                    }
+                }
+                MouseArea {
+                    id: focusMouse
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    acceptedButtons: Qt.LeftButton | Qt.RightButton
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: win.toggleMenu()
                 }
             }
 
             Rectangle {
                 id: divider
-                anchors.left: sessionArea.right
+                anchors.left: focusSeg.right
                 anchors.verticalCenter: parent.verticalCenter
                 width: 1
                 height: 16
@@ -615,6 +881,123 @@ PanelWindow {
         }
     }
 
+    // ── section 28: the newest unseen notification, over the badge ──
+    PopupWindow {
+        id: badgeTip
+        anchor.window: win
+        anchor.rect.x: Math.max(0, pill.x + content.x + sessionArea.x + badge.x + badge.width / 2 - 24)
+        anchor.rect.y: Theme.pillHeight + 6
+        implicitWidth: Math.min(380, badgeTipRow.implicitWidth + 26)
+        implicitHeight: 30
+        color: Theme.transparent
+        visible: badge.visible && badge.tipShown && badgeMouse.containsMouse && !menu.visible
+
+        Rectangle {
+            anchors.fill: parent
+            radius: (height / 2) * Theme.round
+            color: Theme.surfaceRaised
+            border.width: 1
+            border.color: Theme.outline
+            clip: true
+            Row {
+                id: badgeTipRow
+                x: 13
+                anchors.verticalCenter: parent.verticalCenter
+                spacing: 8
+                Text {
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: win.ipc.notifyCount + " NEW"
+                    color: Theme.primary
+                    font.family: Theme.fontMono
+                    font.pixelSize: 9
+                    font.weight: Font.DemiBold
+                    font.letterSpacing: 1.4
+                }
+                Text {
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: Math.min(implicitWidth, 290)
+                    elide: Text.ElideRight
+                    textFormat: Text.PlainText
+                    text: win.ipc.notifyTop || "Click and I'll sum them up."
+                    color: Theme.text
+                    font.family: Theme.fontUi
+                    font.pixelSize: 12
+                }
+            }
+        }
+    }
+
+    // ── section 28: meeting notes: what is recording, and Stop ──
+    PopupWindow {
+        id: recPopup
+        anchor.window: win
+        anchor.rect.x: Math.max(0, pill.x + content.x + recSeg.x)
+        anchor.rect.y: Theme.pillHeight + 6
+        implicitWidth: Math.min(360, recPopRow.implicitWidth + 24)
+        implicitHeight: 44
+        color: Theme.transparent
+        visible: false
+        onVisibleChanged: if (visible && !win.recording) visible = false
+
+        HyprlandFocusGrab {
+            windows: [recPopup]
+            active: recPopup.visible
+            onCleared: recPopup.visible = false
+        }
+        Connections {
+            target: win
+            function onRecordingChanged() {
+                if (!win.recording)
+                    recPopup.visible = false;
+            }
+        }
+
+        Rectangle {
+            anchors.fill: parent
+            radius: 14 * Theme.round
+            color: Theme.surfaceRaised
+            border.width: 1
+            border.color: Theme.alpha(Theme.rec, 0.45)
+            Row {
+                id: recPopRow
+                x: 12
+                anchors.verticalCenter: parent.verticalCenter
+                spacing: 10
+                Column {
+                    anchors.verticalCenter: parent.verticalCenter
+                    spacing: 1
+                    Text {
+                        text: "RECORDING MEETING NOTES"
+                        color: Theme.rec
+                        font.family: Theme.fontMono
+                        font.pixelSize: 9
+                        font.weight: Font.DemiBold
+                        font.letterSpacing: 1.4
+                    }
+                    Text {
+                        width: Math.min(implicitWidth, 200)
+                        elide: Text.ElideRight
+                        textFormat: Text.PlainText
+                        text: win.recording ? (win.ipc.meeting.title || "Untitled meeting") : ""
+                        color: Theme.text
+                        font.family: Theme.fontUi
+                        font.pixelSize: 12
+                    }
+                }
+                PillButton {
+                    anchors.verticalCenter: parent.verticalCenter
+                    implicitHeight: 28
+                    text: "Stop"
+                    primary: true
+                    onClicked: {
+                        win.ipc.send({ cmd: "meeting.stop" });
+                        recPopup.visible = false;
+                    }
+                }
+            }
+        }
+    }
+
     // ── voice volume popup ──
     PopupWindow {
         id: volPopup
@@ -782,7 +1165,15 @@ PanelWindow {
                 }
 
                 Repeater {
-                    model: [
+                    // section 28 first: what is running now (focus, meeting notes, notifications)
+                    model: (win.focusInfo ? [
+                        { label: win.focusInfo.paused ? "Resume focus" : "Pause focus", cmd: "focus.pause", enabled: true },
+                        { label: "Stop focus", cmd: "focus.stop", enabled: true }
+                    ] : []).concat(win.recording ? [
+                        { label: "Stop meeting notes", cmd: "meeting.stop", enabled: true }
+                    ] : []).concat(win.online && win.ipc.notifyCount > 0 ? [
+                        { label: "Clear notifications (" + win.ipc.notifyCount + ")", cmd: "notify.clear", enabled: true }
+                    ] : []).concat([
                         { label: "Unload big model now", cmd: "model.unload", enabled: win.ipc.connected },
                         { label: "Mute / unmute wake word", cmd: "wake.toggle", enabled: win.ipc.connected },
                         { label: "Lower other audio while active", enabled: win.ipc.connected, checkable: true,
@@ -797,7 +1188,7 @@ PanelWindow {
                           checked: win.brain === "fast", msg: { cmd: "llm.brain.set", brain: "fast" } },
                         { label: "Brain: Smart", enabled: win.ipc.connected && win.brain !== "", checkable: true,
                           checked: win.brain === "smart", msg: { cmd: "llm.brain.set", brain: "smart" } }
-                    ].concat(win.fastModels.length > 1 ? win.fastModels.map(id => ({
+                    ]).concat(win.fastModels.length > 1 ? win.fastModels.map(id => ({
                           label: "Fast model: " + win.modelLabel(id),
                           enabled: win.ipc.connected && win.brain === "fast", checkable: true,
                           checked: win.fastModel === id, msg: { cmd: "llm.fast.set", model: id } })) : [])

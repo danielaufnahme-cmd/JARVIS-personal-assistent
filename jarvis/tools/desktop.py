@@ -22,6 +22,13 @@ def _desktop(ctx: ToolContext) -> Desktop:
     return ctx.desktop
 
 
+async def _scene_instead(ctx: ToolContext, name: str, action: str) -> dict[str, Any] | None:
+    """Section 27: a name that is no app (or no open window) but a saved scene goes to the scene tool."""
+    from jarvis.tools.awareness import scene_for_app_name
+
+    return await scene_for_app_name(ctx, name, action)
+
+
 def _app_name(desk: Desktop, query: str, wins: list[Window]) -> str:
     res = desk.resolve_app(query)
     if res.entry is not None:
@@ -34,6 +41,9 @@ async def _open_app(ctx: ToolContext, args: dict[str, Any]) -> dict[str, Any]:
     if result["status"] == "ambiguous":
         result["hint"] = "Ask the user which one they mean, in one short question."
     elif result["status"] == "not_found":
+        scene = await _scene_instead(ctx, str(args["name"]), "load")  # section 27: "open firm work"
+        if scene is not None:
+            return scene
         result["error"] = f"No installed app matches {args['name']!r}."
     return result
 
@@ -132,6 +142,9 @@ async def _close_app(ctx: ToolContext, args: dict[str, Any]) -> dict[str, Any]:
     wins = await desk.windows()
     matched = desk.match_windows(str(args["name"]), wins)
     if not matched:
+        scene = await _scene_instead(ctx, str(args["name"]), "close")  # section 27: "close firm work"
+        if scene is not None:
+            return scene
         return {"error": f"{args['name']} isn't open.", "open_apps": sorted({w.app for w in wins})}
     apps = sorted({w.app for w in matched})
     if len(apps) > 1:

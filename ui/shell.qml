@@ -16,8 +16,15 @@ ShellRoot {
         ipc: jarvisIpc
     }
 
+    // Section 28: right under the pill: the attachment chip and the search results; the cards below move down for it.
+    PillDock {
+        id: dock
+        ipc: jarvisIpc
+    }
+
     DraftCard {
         ipc: jarvisIpc
+        stackOffset: dock.stackHeight
     }
 
     // Rounded/square corners switch, top-right corner (not JARVIS itself; it just shares this layer shell).
@@ -33,6 +40,7 @@ ShellRoot {
     ReadingPanel {
         ipc: jarvisIpc
         store: hudStore
+        stackOffset: dock.stackHeight
     }
 
     // Section 25: the showcase's small cores and its choreography, on a click-through layer that exists only while a

@@ -35,8 +35,16 @@ Scope {
     property var micBusyApps: []
     property string transcript: ""
     property string reply: ""
+    // Section 28 (all also in the snapshot, so a reconnect shows them again). Times are epoch ms here.
+    property var attachments: []        // [{kind: file|image|folder|url|text|region, name, thumb: base64 png|null}]
+    property var meeting: null          // {active, startedAt, title} while meeting notes record
+    property int notifyCount: 0         // unseen desktop notifications
+    property string notifyTop: ""
+    property var focusState: null            // {active, paused, label, startedAt, endsAt, pausedLeftMs}
+    property var searchResults: null    // {query, items: [{path, name, folder, modified (ms), snippet}], at}
 
     signal ack(var msg)
+    signal memorySaved(string kind, string text)   // section 28: a fact remembered / a conversation saved / forgotten
     signal draftCleared(string id, string result)
     signal alerted(var alert)
     signal daemonError(string source, string message)
@@ -124,6 +132,59 @@ Scope {
         } : null;
     }
 
+    // ── section 28 ──
+    // A daemon time: epoch seconds (or ms, or an ISO string) -> epoch ms; 0 = unknown.
+    function _ms(v) {
+        if (v === null || v === undefined || v === "")
+            return 0;
+        const n = Number(v);
+        if (!isNaN(n))
+            return n > 1e12 ? n : n * 1000;
+        const p = Date.parse(String(v));
+        return isNaN(p) ? 0 : p;
+    }
+    function _applyAttach(a) {
+        const items = a && Array.isArray(a.items) ? a.items : [];
+        root.attachments = items.slice(0, 16).map(i => ({
+            kind: ["file", "image", "folder", "url", "text", "region"].indexOf(String(i.kind)) >= 0 ? String(i.kind) : "file",
+            name: String(i.name || ""),
+            thumb: typeof i.thumb === "string" && i.thumb.length > 0 && i.thumb.length < 200000 ? i.thumb : ""
+        }));
+    }
+    function _applyMeeting(m) {
+        root.meeting = m && typeof m === "object" && m.active
+            ? { active: true, startedAt: root._ms(m.started_at) || Date.now(), title: String(m.title || "") } : null;
+    }
+    function _applyNotify(n) {
+        if (!n || typeof n !== "object")
+            return;
+        root.notifyCount = Math.max(0, Math.floor(Number(n.count) || 0));
+        root.notifyTop = root.notifyCount > 0 ? String(n.top || "") : "";
+    }
+    function _applyFocus(f) {
+        if (!f || typeof f !== "object" || !f.active) {
+            root.focusState = null;
+            return;
+        }
+        const ends = root._ms(f.ends_at);
+        // A paused focus doesn't run down; the daemon sends no remaining time, so it is frozen here.
+        const prev = root.focusState;
+        const left = !f.paused ? 0
+            : prev && prev.paused && prev.endsAt === ends ? prev.pausedLeftMs : Math.max(0, ends - Date.now());
+        root.focusState = { active: true, paused: !!f.paused, label: String(f.label || ""), startedAt: root._ms(f.started_at),
+                       endsAt: ends, pausedLeftMs: left };
+    }
+    function _applySearch(msg) {
+        const items = Array.isArray(msg.items) ? msg.items : [];
+        root.searchResults = {
+            query: String(msg.query || ""),
+            items: items.slice(0, 5).map(i => ({ path: String(i.path || ""), name: String(i.name || ""),
+                                                 folder: String(i.folder || ""), modified: root._ms(i.modified),
+                                                 snippet: String(i.snippet || "") })),
+            at: Date.now()
+        };
+    }
+
     function _handle(line) {
         let msg;
         try {
@@ -157,8 +218,32 @@ Scope {
                 root.micBusy = !!(msg.mic_busy && msg.mic_busy.busy);
                 root.micBusyApps = (msg.mic_busy && msg.mic_busy.apps) || [];
                 root.level = 0;
+                root._applyAttach(msg.attach);
+                root._applyMeeting(msg.meeting);
+                root.notifyCount = 0;
+                root.notifyTop = "";
+                root._applyNotify(msg.notify);
+                root._applyFocus(msg.focus);
                 break;
             }
+            case "attach.state":
+                root._applyAttach(msg);
+                break;
+            case "meeting.state":
+                root._applyMeeting(msg);
+                break;
+            case "notify.unseen":
+                root._applyNotify(msg);
+                break;
+            case "focus.state":
+                root._applyFocus(msg);
+                break;
+            case "search.results":
+                root._applySearch(msg);
+                break;
+            case "memory.saved":
+                root.memorySaved(String(msg.kind || "fact"), String(msg.text || ""));
+                break;
             case "mic_busy":
                 root.micBusy = !!msg.busy;
                 root.micBusyApps = msg.apps || [];
@@ -262,6 +347,12 @@ Scope {
                 root.hudOpen = false;
             root.showcaseActive = false;
             root.draft = null;   // it comes back in the snapshot on reconnect
+            // section 28: all of these come back in the snapshot too
+            root.attachments = [];
+            root.meeting = null;
+            root.focusState = null;
+            root.notifyCount = 0;
+            root.notifyTop = "";
         }
     }
 

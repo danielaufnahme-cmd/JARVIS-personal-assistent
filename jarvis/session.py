@@ -79,6 +79,8 @@ class Session:
         self.is_user_busy: Callable[[], bool] = lambda: False
         # Section 20: the HUD opened (the daemon pre-warms the voice model quietly).
         self.on_hud_open: Callable[[], Any] = _noop
+        # Section 28: called (synchronously) when a session closes; what was dropped on the orb goes with it.
+        self.on_end: list[Callable[[], Any]] = []
         # Section 24: the showcase waits for its lines to be spoken, and silences JARVIS when it is stopped.
         from jarvis.integrations.showcase import SHOWCASE
 
@@ -168,6 +170,11 @@ class Session:
         self._silence_task = None
         self._close_confirm_window(settle=False)
         self._stop_showcase("session closed")
+        for hook in list(self.on_end):
+            try:
+                hook()
+            except Exception:
+                log.exception("session end hook failed")
         if self._turn_task is not None and not self._turn_task.done():
             self._turn_task.cancel()
         await _call_hook(self.on_stop_listening, "on_stop_listening")
@@ -175,6 +182,18 @@ class Session:
         # The model is deliberately left loaded; llama-swap's ttl unloads it after idle.
         self.mode = "idle"
         self._emit_state()
+
+    def invite(self) -> None:
+        """Section 28: something was dropped on the orb (or a box drawn) while a session is open: listen for a new
+        first question, as after a click (the first-question clock; the conversation stays)."""
+        if not self.active:
+            return
+        self.opened_by = "click"
+        self.questions = 0
+        self._followup_until = 0.0
+        self._restart_silence_timer()
+        if self.mode == "idle":
+            self.set_mode(self._resting_mode())
 
     def keeps_context(self) -> bool:
         """Whether a turn now would still see the last conversation: a session is open, or the next start() keeps
@@ -247,6 +266,11 @@ class Session:
         self.bus.emit("transcript", text=text, final=True)
         if self._stop_computer(text):
             return self.bus_reply("Stopped, sir. It's all yours.")
+        from jarvis.integrations.meeting import session_turn as meeting_turn
+
+        meeting = await meeting_turn(text)  # section 26: exactly "take notes" / "stop taking notes", no model
+        if meeting is not None:
+            return self.bus_reply(meeting)
         showcase = await self._showcase(text)
         if showcase is not None:
             self._reply_finished()

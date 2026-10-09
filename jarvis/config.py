@@ -416,6 +416,89 @@ class ComputerConfig:
     search_url: str = "https://duckduckgo.com/?q={q}"   # Zen's search engine
 
 
+# Section 26: memory and knowledge (jarvis/memory/, integrations/meeting.py, integrations/content_index.py).
+@dataclass(frozen=True)
+class MemoryConfig:
+    enabled: bool = True                # the memory tool and the "what I know about you" block in the prompt
+    auto_facts: bool = False            # config.example.toml turns these on; a bare Config() (tests) stays quiet
+    conversation_notes: bool = False
+    folder: str = "~/Documents/JARVIS/Memory"
+    prompt_chars: int = 1400            # the block's cap (~350 tokens)
+
+
+@dataclass(frozen=True)
+class MeetingConfig:
+    enabled: bool = True
+    max_minutes: int = 180
+    chunk_s: float = 28.0               # transcription chunks (Whisper reads at most 30 s at a time)
+    mic_source: str = ""                # "" = JARVIS's echo-cancelled mic if loaded, else the default source
+    system_audio: bool = True           # also record the default sink's monitor (the other side of a call)
+    folder: str = "~/Documents/JARVIS/Notes"
+    summary_model: str = "auto"         # "auto" (the 35B unless a coding job / computer control runs) | "fast"
+    summary_timeout_s: float = 600.0
+
+
+@dataclass(frozen=True)
+class SearchConfig:
+    enabled: bool = False               # like [news]: on in config.example.toml; a bare Config() never indexes
+    roots: tuple[str, ...] = ("~/Documents", "~/Downloads", "~/Desktop", "~/Projects")
+    refresh_min: int = 30
+    first_delay_s: float = 120.0
+    max_text_bytes: int = 2_000_000
+    max_doc_bytes: int = 30_000_000
+    max_chars: int = 200_000
+    max_files: int = 50_000
+    pdf_pages: int = 50
+
+
+# Section 27: desktop awareness.
+@dataclass(frozen=True)
+class NotificationsConfig:
+    enabled: bool = True
+    source: str = "auto"                # "auto" | "dbus" | "noctalia"
+    ignore_apps: tuple[str, ...] = ("hyprvoice", "jarvis")
+    keep_hours: float = 12.0
+    max_items: int = 100
+    briefing: bool = True
+
+
+@dataclass(frozen=True)
+class FocusConfig:
+    enabled: bool = True
+    default_minutes: int = 45
+    dnd: bool = True
+    quiet_reminders: bool = True
+
+
+@dataclass(frozen=True)
+class ActivityConfig:
+    enabled: bool = True
+    retention_days: int = 30
+    idle_after_s: float = 300.0
+    cursor_poll_s: float = 20.0
+    private_classes: tuple[str, ...] = ()
+
+
+@dataclass(frozen=True)
+class ScenesConfig:
+    enabled: bool = True
+    dir: str = ""                       # "" = ~/.config/jarvis/scenes
+    launch_timeout_s: float = 15.0
+    max_urls: int = 30
+
+
+# Section 28: things dropped on the orb, and a box drawn on the screen (jarvis/integrations/attachments.py).
+@dataclass(frozen=True)
+class AttachConfig:
+    enabled: bool = True
+    max_items: int = 8                  # per drop
+    max_chars: int = 6000               # extracted text per turn, across all items
+    max_images: int = 3                 # pictures the vision model looks at per turn
+    max_file_mb: int = 25               # bigger files: name, size and date only
+    pdf_pages: int = 30
+    region_max_kb: int = 700            # the crop travels base64 in one IPC line (max 1 MiB)
+
+
 @dataclass(frozen=True)
 class Config:
     persona: PersonaConfig = field(default_factory=PersonaConfig)
@@ -444,6 +527,14 @@ class Config:
     briefing: BriefingConfig = field(default_factory=BriefingConfig)
     computer: ComputerConfig = field(default_factory=ComputerConfig)
     showcase: ShowcaseConfig = field(default_factory=ShowcaseConfig)
+    attach: AttachConfig = field(default_factory=AttachConfig)
+    notifications: NotificationsConfig = field(default_factory=NotificationsConfig)
+    focus: FocusConfig = field(default_factory=FocusConfig)
+    activity: ActivityConfig = field(default_factory=ActivityConfig)
+    scenes: ScenesConfig = field(default_factory=ScenesConfig)
+    memory: MemoryConfig = field(default_factory=MemoryConfig)
+    meeting: MeetingConfig = field(default_factory=MeetingConfig)
+    search: SearchConfig = field(default_factory=SearchConfig)
 
 
 def _merge(base: dict[str, Any], override: dict[str, Any]) -> dict[str, Any]:

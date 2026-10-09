@@ -1,0 +1,749 @@
+{
+ "model": "qwen35-4b",
+ "rows": [
+  {
+   "turn": "What did I miss?",
+   "spoken": "Two emails, one from Anna that looks urgent, and your build finished.",
+   "calls": [
+    [
+     "notifications",
+     {
+      "action": "summary"
+     }
+    ]
+   ],
+   "executors_ran": [],
+   "seconds": 0.98,
+   "fallbacks": 0,
+   "pass": true,
+   "why": ""
+  },
+  {
+   "turn": "Any notifications?",
+   "spoken": "Two emails, one from Anna that looks urgent, and your build finished.",
+   "calls": [
+    [
+     "notifications",
+     {
+      "action": "summary"
+     }
+    ]
+   ],
+   "executors_ran": [],
+   "seconds": 0.96,
+   "fallbacks": 0,
+   "pass": true,
+   "why": ""
+  },
+  {
+   "turn": "Save this as firm work.",
+   "spoken": "Saved firm work: 5 windows on 3 workspaces, with 4 browser tabs.",
+   "calls": [
+    [
+     "scene",
+     {
+      "action": "save",
+      "name": "firm work"
+     }
+    ]
+   ],
+   "executors_ran": [],
+   "seconds": 1.22,
+   "fallbacks": 0,
+   "pass": true,
+   "why": ""
+  },
+  {
+   "turn": "Firm work.",
+   "spoken": "Opening firm work: 5 windows.",
+   "calls": [
+    [
+     "scene",
+     {
+      "action": "load",
+      "name": "firm work"
+     }
+    ]
+   ],
+   "executors_ran": [],
+   "seconds": 1.02,
+   "fallbacks": 0,
+   "pass": true,
+   "why": ""
+  },
+  {
+   "turn": "Load firm work.",
+   "spoken": "Opening firm work: 5 windows.",
+   "calls": [
+    [
+     "scene",
+     {
+      "action": "load",
+      "name": "firm work"
+     }
+    ]
+   ],
+   "executors_ran": [],
+   "seconds": 1.02,
+   "fallbacks": 0,
+   "pass": true,
+   "why": ""
+  },
+  {
+   "turn": "Close firm work.",
+   "spoken": "Closed firm work: 5 windows.",
+   "calls": [
+    [
+     "scene",
+     {
+      "action": "close",
+      "name": "firm work"
+     }
+    ]
+   ],
+   "executors_ran": [],
+   "seconds": 1.01,
+   "fallbacks": 0,
+   "pass": true,
+   "why": ""
+  },
+  {
+   "turn": "End of day.",
+   "spoken": "Closed firm work: 5 windows.",
+   "calls": [
+    [
+     "scene",
+     {
+      "action": "close",
+      "name": "end of day"
+     }
+    ]
+   ],
+   "executors_ran": [],
+   "seconds": 1.05,
+   "fallbacks": 0,
+   "pass": true,
+   "why": ""
+  },
+  {
+   "turn": "What scenes do I have?",
+   "spoken": "You have 2 scenes: firm work and gaming.",
+   "calls": [
+    [
+     "scene",
+     {
+      "action": "list"
+     }
+    ]
+   ],
+   "executors_ran": [],
+   "seconds": 0.87,
+   "fallbacks": 0,
+   "pass": true,
+   "why": ""
+  },
+  {
+   "turn": "Delete the scene gaming.",
+   "spoken": "Shall I delete the gaming scene?",
+   "calls": [
+    [
+     "scene",
+     {
+      "action": "delete",
+      "name": "gaming"
+     }
+    ]
+   ],
+   "executors_ran": [],
+   "seconds": 1.04,
+   "fallbacks": 0,
+   "pass": true,
+   "why": ""
+  },
+  {
+   "turn": "Focus for 45 minutes on Geonix.",
+   "spoken": "Focus on Geonix for 45 minutes. Notifications are on hold.",
+   "calls": [
+    [
+     "focus",
+     {
+      "action": "start",
+      "minutes": 45,
+      "label": "Geonix"
+     }
+    ]
+   ],
+   "executors_ran": [],
+   "seconds": 1.45,
+   "fallbacks": 0,
+   "pass": true,
+   "why": ""
+  },
+  {
+   "turn": "Pause focus.",
+   "spoken": "Taking a break. Say resume focus when you're back.",
+   "calls": [
+    [
+     "focus",
+     {
+      "action": "pause"
+     }
+    ]
+   ],
+   "executors_ran": [],
+   "seconds": 0.92,
+   "fallbacks": 0,
+   "pass": true,
+   "why": ""
+  },
+  {
+   "turn": "Stop focus.",
+   "spoken": "Focus done, sir: 32 minutes on Geonix, mostly Neovim and Zen.",
+   "calls": [
+    [
+     "focus",
+     {
+      "action": "stop"
+     }
+    ]
+   ],
+   "executors_ran": [],
+   "seconds": 1.05,
+   "fallbacks": 0,
+   "pass": true,
+   "why": ""
+  },
+  {
+   "turn": "What did I do today?",
+   "spoken": "You spent 6 hours at the computer today, mostly in Ghostty (Neovim) for 3 hours and Zen for 2 hours.",
+   "calls": [
+    [
+     "activity",
+     {
+      "action": "summary",
+      "day": "today"
+     }
+    ]
+   ],
+   "executors_ran": [],
+   "seconds": 1.45,
+   "fallbacks": 0,
+   "pass": true,
+   "why": ""
+  },
+  {
+   "turn": "How long was I in Neovim today?",
+   "spoken": "2 hours 12 minutes in Neovim today, sir.",
+   "calls": [
+    [
+     "activity",
+     {
+      "action": "app_time",
+      "app": "Neovim",
+      "day": "today"
+     }
+    ]
+   ],
+   "executors_ran": [],
+   "seconds": 1.43,
+   "fallbacks": 0,
+   "pass": true,
+   "why": ""
+  },
+  {
+   "turn": "What was I working on Tuesday afternoon?",
+   "spoken": "You spent 6 hours at the computer Tuesday afternoon, mostly in Ghostty (Neovim) for 3 hours and Zen for 2 hours.",
+   "calls": [
+    [
+     "activity",
+     {
+      "action": "summary",
+      "day": "Tuesday",
+      "part": "afternoon"
+     }
+    ]
+   ],
+   "executors_ran": [],
+   "seconds": 1.71,
+   "fallbacks": 0,
+   "pass": true,
+   "why": ""
+  },
+  {
+   "turn": "Write a summary of my day.",
+   "spoken": "Your day is on screen: 6 hours at the computer today, mostly Ghostty.",
+   "calls": [
+    [
+     "activity",
+     {
+      "action": "report",
+      "day": "today"
+     }
+    ]
+   ],
+   "executors_ran": [],
+   "seconds": 1.23,
+   "fallbacks": 0,
+   "pass": true,
+   "why": ""
+  },
+  {
+   "turn": "Pause tracking.",
+   "spoken": "Tracking paused, sir.",
+   "calls": [
+    [
+     "activity",
+     {
+      "action": "pause"
+     }
+    ]
+   ],
+   "executors_ran": [],
+   "seconds": 0.75,
+   "fallbacks": 0,
+   "pass": true,
+   "why": ""
+  },
+  {
+   "turn": "Delete today's log.",
+   "spoken": "Shall I delete today's log?",
+   "calls": [
+    [
+     "activity",
+     {
+      "action": "delete_today"
+     }
+    ]
+   ],
+   "executors_ran": [],
+   "seconds": 0.84,
+   "fallbacks": 0,
+   "pass": true,
+   "why": ""
+  },
+  {
+   "turn": "Close the browser.",
+   "spoken": "Closed browser, sir.",
+   "calls": [
+    [
+     "close_app",
+     {
+      "name": "browser"
+     }
+    ]
+   ],
+   "executors_ran": [],
+   "seconds": 0.75,
+   "fallbacks": 0,
+   "pass": true,
+   "why": ""
+  },
+  {
+   "turn": "Open Firefox.",
+   "spoken": "Firefox is open, sir.",
+   "calls": [
+    [
+     "open_app",
+     {
+      "name": "firefox"
+     }
+    ]
+   ],
+   "executors_ran": [],
+   "seconds": 0.75,
+   "fallbacks": 0,
+   "pass": true,
+   "why": ""
+  },
+  {
+   "turn": "What did I miss?",
+   "spoken": "You missed an email from Anna.",
+   "calls": [
+    [
+     "notifications",
+     {
+      "action": "summary"
+     }
+    ]
+   ],
+   "executors_ran": [],
+   "seconds": 0.82,
+   "fallbacks": 0,
+   "pass": true,
+   "why": ""
+  },
+  {
+   "turn": "What did I miss?",
+   "spoken": "Two emails, one from Anna that looks urgent, and your build finished.",
+   "calls": [
+    [
+     "notifications",
+     {
+      "action": "summary"
+     }
+    ]
+   ],
+   "executors_ran": [],
+   "seconds": 0.92,
+   "fallbacks": 0,
+   "pass": true,
+   "why": ""
+  },
+  {
+   "turn": "Any notifications?",
+   "spoken": "Two emails, one from Anna that looks urgent, and your build finished.",
+   "calls": [
+    [
+     "notifications",
+     {
+      "action": "summary"
+     }
+    ]
+   ],
+   "executors_ran": [],
+   "seconds": 0.97,
+   "fallbacks": 0,
+   "pass": true,
+   "why": ""
+  },
+  {
+   "turn": "Save this as firm work.",
+   "spoken": "Saved firm work: 5 windows on 3 workspaces, with 4 browser tabs.",
+   "calls": [
+    [
+     "scene",
+     {
+      "action": "save",
+      "name": "firm work"
+     }
+    ]
+   ],
+   "executors_ran": [],
+   "seconds": 1.24,
+   "fallbacks": 0,
+   "pass": true,
+   "why": ""
+  },
+  {
+   "turn": "Firm work.",
+   "spoken": "Opening firm work: 5 windows.",
+   "calls": [
+    [
+     "scene",
+     {
+      "action": "load",
+      "name": "firm work"
+     }
+    ]
+   ],
+   "executors_ran": [],
+   "seconds": 1.03,
+   "fallbacks": 0,
+   "pass": true,
+   "why": ""
+  },
+  {
+   "turn": "Load firm work.",
+   "spoken": "Opening firm work: 5 windows.",
+   "calls": [
+    [
+     "scene",
+     {
+      "action": "load",
+      "name": "firm work"
+     }
+    ]
+   ],
+   "executors_ran": [],
+   "seconds": 1.03,
+   "fallbacks": 0,
+   "pass": true,
+   "why": ""
+  },
+  {
+   "turn": "Close firm work.",
+   "spoken": "I'm afraid I have nothing to add, sir.",
+   "calls": [
+    [
+     "scene",
+     {
+      "action": "close",
+      "name": "firm work"
+     }
+    ]
+   ],
+   "executors_ran": [],
+   "seconds": 10.9,
+   "fallbacks": 0,
+   "pass": true,
+   "why": ""
+  },
+  {
+   "turn": "End of day.",
+   "spoken": "Closed firm work: 5 windows.",
+   "calls": [
+    [
+     "scene",
+     {
+      "action": "close",
+      "name": "end of day"
+     }
+    ]
+   ],
+   "executors_ran": [],
+   "seconds": 8.2,
+   "fallbacks": 0,
+   "pass": true,
+   "why": ""
+  },
+  {
+   "turn": "What scenes do I have?",
+   "spoken": "You have two scenes: firm work and gaming.",
+   "calls": [
+    [
+     "scene",
+     {
+      "action": "list"
+     }
+    ]
+   ],
+   "executors_ran": [],
+   "seconds": 0.82,
+   "fallbacks": 0,
+   "pass": true,
+   "why": ""
+  },
+  {
+   "turn": "Delete the scene gaming.",
+   "spoken": "Shall I delete the gaming scene?",
+   "calls": [
+    [
+     "scene",
+     {
+      "action": "delete",
+      "name": "gaming"
+     }
+    ]
+   ],
+   "executors_ran": [],
+   "seconds": 1.01,
+   "fallbacks": 0,
+   "pass": true,
+   "why": ""
+  },
+  {
+   "turn": "Focus for 45 minutes on Geonix.",
+   "spoken": "Focus on Geonix for 45 minutes. Notifications are on hold.",
+   "calls": [
+    [
+     "focus",
+     {
+      "action": "start",
+      "minutes": 45,
+      "label": "Geonix"
+     }
+    ]
+   ],
+   "executors_ran": [],
+   "seconds": 1.39,
+   "fallbacks": 0,
+   "pass": true,
+   "why": ""
+  },
+  {
+   "turn": "Pause focus.",
+   "spoken": "Taking a break. Say resume focus when you're back.",
+   "calls": [
+    [
+     "focus",
+     {
+      "action": "pause"
+     }
+    ]
+   ],
+   "executors_ran": [],
+   "seconds": 0.86,
+   "fallbacks": 0,
+   "pass": true,
+   "why": ""
+  },
+  {
+   "turn": "Stop focus.",
+   "spoken": "Focus done, sir: 32 minutes on Geonix, mostly Neovim and Zen.",
+   "calls": [
+    [
+     "focus",
+     {
+      "action": "stop"
+     }
+    ]
+   ],
+   "executors_ran": [],
+   "seconds": 1.03,
+   "fallbacks": 0,
+   "pass": true,
+   "why": ""
+  },
+  {
+   "turn": "What did I do today?",
+   "spoken": "You spent 6 hours at the computer today, mostly in Ghostty (Neovim) for 3 hours and Zen for 2 hours.",
+   "calls": [
+    [
+     "activity",
+     {
+      "action": "summary",
+      "day": "today"
+     }
+    ]
+   ],
+   "executors_ran": [],
+   "seconds": 1.42,
+   "fallbacks": 0,
+   "pass": true,
+   "why": ""
+  },
+  {
+   "turn": "How long was I in Neovim today?",
+   "spoken": "2 hours 12 minutes in Neovim today, sir.",
+   "calls": [
+    [
+     "activity",
+     {
+      "action": "app_time",
+      "app": "Neovim",
+      "day": "today"
+     }
+    ]
+   ],
+   "executors_ran": [],
+   "seconds": 1.4,
+   "fallbacks": 0,
+   "pass": true,
+   "why": ""
+  },
+  {
+   "turn": "What was I working on Tuesday afternoon?",
+   "spoken": "You were working on Ghostty (Neovim) for 3 hours and Zen for 2 hours Tuesday afternoon.",
+   "calls": [
+    [
+     "activity",
+     {
+      "action": "summary",
+      "day": "Tuesday",
+      "part": "afternoon"
+     }
+    ]
+   ],
+   "executors_ran": [],
+   "seconds": 1.55,
+   "fallbacks": 0,
+   "pass": true,
+   "why": ""
+  },
+  {
+   "turn": "Write a summary of my day.",
+   "spoken": "Your day is on screen: 6 hours at the computer today, mostly Ghostty.",
+   "calls": [
+    [
+     "activity",
+     {
+      "action": "report",
+      "day": "today"
+     }
+    ]
+   ],
+   "executors_ran": [],
+   "seconds": 1.2,
+   "fallbacks": 0,
+   "pass": true,
+   "why": ""
+  },
+  {
+   "turn": "Pause tracking.",
+   "spoken": "Tracking paused, sir.",
+   "calls": [
+    [
+     "activity",
+     {
+      "action": "pause"
+     }
+    ]
+   ],
+   "executors_ran": [],
+   "seconds": 0.74,
+   "fallbacks": 0,
+   "pass": true,
+   "why": ""
+  },
+  {
+   "turn": "Delete today's log.",
+   "spoken": "Shall I delete today's log?",
+   "calls": [
+    [
+     "activity",
+     {
+      "action": "delete_today"
+     }
+    ]
+   ],
+   "executors_ran": [],
+   "seconds": 0.81,
+   "fallbacks": 0,
+   "pass": true,
+   "why": ""
+  },
+  {
+   "turn": "Close the browser.",
+   "spoken": "Closed browser, sir.",
+   "calls": [
+    [
+     "close_app",
+     {
+      "name": "browser"
+     }
+    ]
+   ],
+   "executors_ran": [],
+   "seconds": 0.74,
+   "fallbacks": 0,
+   "pass": true,
+   "why": ""
+  },
+  {
+   "turn": "Open Firefox.",
+   "spoken": "Firefox is now open, sir.",
+   "calls": [
+    [
+     "open_app",
+     {
+      "name": "firefox"
+     }
+    ]
+   ],
+   "executors_ran": [],
+   "seconds": 0.75,
+   "fallbacks": 0,
+   "pass": true,
+   "why": ""
+  },
+  {
+   "turn": "What did I miss?",
+   "spoken": "An email from Anna.",
+   "calls": [
+    [
+     "notifications",
+     {
+      "action": "summary"
+     }
+    ]
+   ],
+   "executors_ran": [],
+   "seconds": 0.76,
+   "fallbacks": 0,
+   "pass": true,
+   "why": ""
+  }
+ ],
+ "passed": 42,
+ "total": 42
+}

@@ -76,6 +76,7 @@ _NOT_DEEP = re.compile(
     r"\b(?:e-?mails?|messages?|texts?|sms|remind(?:er)?s?|timers?|alarm|weather|forecast|rain|news|headlines?"
     r"|calendar|full ?screen|hud|draft|reply|files?|folders?|save|screenshot|project)\b"
     r"|\b(?:copied|clipboard)\b|zkopíroval|schrán[kc]|kopiert|zwischenablage|copiado|portapapeles"  # section 22
+    r"|\b(?:notifications?|scenes?|focus (?:mode|for|on)|tracking|activity log|my day|did i miss)\b"  # section 27
     r"|\b(?:build|make|create|code|program|develop)\b.{0,40}\b(?:app|application|game|website|site|tool)\b"
     r"|\b(?:briefly|quick(?:ly)?|short answer|keep it short|in short|in (?:one|a|two) sentences?|one sentence"
     r"|simply put|again)\b"
@@ -239,7 +240,9 @@ _ACTION_CLAIMS: tuple[tuple[re.Pattern[str], frozenset[str]], ...] = (
                 r"(?![^.!?]{0,30}\b(?:full ?screen|hud|draft|reminder|timer)\b)", re.IGNORECASE),
      frozenset({"open_app", "open_url", "open_path", "focus_app", "switch_workspace", "screenshot", "lock_screen",
                 "close_app", "create_file", "append_to_file", "media", "open_with", "open_hud", "close_hud", "set_reminder",
-                "set_timer", "draft_email", "revise_draft", "computer_task", "type_text", "press_keys", "mouse"})),
+                "set_timer", "draft_email", "revise_draft", "computer_task", "type_text", "press_keys", "mouse",
+                "scene", "focus", "activity",  # section 27: "Opening firm work…", "Saved …", "Closed …"
+                "memory", "meeting_notes"})),  # section 26: "Saved, sir." after a memory save
     # Section 21: "Taking control." without computer_task (measured: the 4B once said it instead of calling it).
     (re.compile(r"\btak(?:e|ing) (?:control|over)\b|\bpřebírám\b", re.IGNORECASE), frozenset({"computer_task"})),
     # Section 21: "Your screen shows…" / "On the screen there's…" without having looked.
@@ -375,12 +378,22 @@ class Agent:
         self.fallbacks = 0  # fast-model turns retried on the smart model (section 12)
         self.user_language: str | None = None  # set by the voice pipeline per turn: "en" | "de" | "cs" | "es"
         self._prompt_template = PROMPT_FILE.read_text(encoding="utf-8")
+        # Section 26: conversation memory listens to every finished turn and to each new conversation.
+        self.on_turn: list[Callable[[list[dict[str, Any]]], None]] = []
+        self.on_reset: list[Callable[[], None]] = []
+        self._memory_block: str | None = None
         tools.bind(bus=bus, gate=gate, llm=llm, cfg=cfg)
 
     # --- public -----------------------------------------------------------------
 
     def reset(self) -> None:
         self.history.clear()
+        self._memory_block = None
+        for hook in list(self.on_reset):
+            try:
+                hook()
+            except Exception:  # noqa: BLE001
+                log.exception("reset hook failed")
         self.awaiting_confirmation = False
 
     async def on_user_utterance(self, text: str) -> str:
@@ -394,6 +407,8 @@ class Agent:
         self._called_tools = set()
         if not text:
             return ""
+        if not self.history:
+            self._memory_block = None  # section 26: a new conversation sees the memory as it is now
         out = _SpokenStream(self.bus)
         ctx = getattr(self.tools, "ctx", None)
         if ctx is not None and hasattr(ctx, "speak"):
@@ -420,10 +435,15 @@ class Agent:
                     out.say(self.line("cancelled"))
                     self._remember([{"role": "user", "content": text}], out.text)
                     return out.text
+            # Section 28: what was dropped on the orb (or boxed on the screen) rides along with this turn; the
+            # routing below still looks at the user's own words only.
+            from jarvis.tools.attachments import for_turn
+
+            words, text = text, await for_turn(self, text)
             # 2. Explicit requests and clear deep questions skip the voice model's routing decision (section 10).
-            route = deep_route(text, pending_draft=self.gate.pending is not None)
+            route = deep_route(words, pending_draft=self.gate.pending is not None)
             if route:
-                log.info("deep route (%s): %r", route, text[:120])
+                log.info("deep route (%s): %r", route, words[:120])
                 turn: list[dict[str, Any]] = [{"role": "user", "content": text}]
                 await self._deep_think(text, out, turn)
                 self._remember(turn, None)
@@ -763,6 +783,21 @@ class Agent:
         text = texts.get(self.user_language or "en") or texts["en"]
         return text.replace("{a}", self.cfg.persona.address)
 
+    def _memory(self) -> str:
+        """Section 26: the "what you know about the user" block. It is re-read only when a conversation starts (a
+        reset, the first turn of an empty history, a primer for a fresh session), so the prompt prefix, and the fast
+        model's saved prompt slot, never change in the middle of one (a fact saved now shows from the next one)."""
+        if self._memory_block is not None:
+            return self._memory_block
+        try:
+            from jarvis import memory
+
+            self._memory_block = memory.get_memory(self.cfg).prompt_block() if memory.enabled(self.cfg) else ""
+        except Exception:  # noqa: BLE001 - memory must never break a turn
+            log.exception("memory block failed")
+            self._memory_block = ""
+        return self._memory_block
+
     def _system_prompt(self, stable: bool = False) -> str:
         """`stable` (section 12): no clock in the system prompt. It is byte-identical from minute to minute, so
         llama-server's prompt cache keeps it and the ~4k tokens of tool schemas that follow it (a minute change
@@ -780,6 +815,9 @@ class Agent:
             .replace("{tz}", tz)
             .replace("{address}", self.cfg.persona.address)
         )
+        memory = self._memory()
+        if memory:
+            prompt += f"\n{memory}\n"
         draft = self.gate.pending
         if draft is not None and draft.kind == "action":  # section 14
             prompt += (f"\nPending action (not done, awaiting the user's confirmation): id {draft.id}, "
@@ -798,6 +836,7 @@ class Agent:
         if with_history:
             return self._messages([{"role": "user", "content": "Hello."}]), self.tools.schemas()
         kept, self.history = self.history, []
+        self._memory_block = None  # section 26: the session about to open starts from the memory as it is now
         try:
             return self._messages([{"role": "user", "content": "Hello."}]), self.tools.schemas()
         finally:
@@ -830,6 +869,11 @@ class Agent:
         if spoken is not None:
             turn = [*turn, {"role": "assistant", "content": spoken}]
         self.history.append(turn)
+        for hook in list(self.on_turn):  # section 26 (before the old tool results below are dropped)
+            try:
+                hook(turn)
+            except Exception:  # noqa: BLE001
+                log.exception("turn hook failed")
         # Old tool results go first (they're the bulky part, and may hold untrusted email text) ...
         for past in self.history[:-KEEP_TOOL_RESULTS_TURNS]:
             for msg in past:

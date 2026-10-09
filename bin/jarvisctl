@@ -12,6 +12,7 @@
   jarvisctl raw '{"cmd":...}'   send any command
   jarvisctl showcase            "present yourself": the showcase starts (stop it: jarvisctl showcase stop)
   jarvisctl showcase --dry-run [--json]       every step with its timing; runs nothing, needs no daemon
+  jarvisctl ask-region          drag a box on the screen (slurp), then ask JARVIS about it (Esc = nothing)
   jarvisctl setup email [--remove]            store/remove the Gmail app password (system keyring)
   jarvisctl setup contacts FILE.vcf|FILE.csv  import contacts (merges by name)
   jarvisctl setup firm geonix [--remove]      store/remove the firm tracker's read-only token (keyring)
@@ -138,7 +139,83 @@ def run_in_venv(module, args):
     return 1
 
 
+# Section 28: the crop goes base64 in one IPC line (jarvisd caps a line at 1 MiB).
+REGION_MAX_BYTES = 700 * 1024
+
+
+def _grab(geometry, *opts):
+    """grim's image of one box, straight from its stdout (never a file)."""
+    import subprocess
+
+    run = subprocess.run(["grim", "-g", geometry, *opts, "-"], capture_output=True, timeout=10)
+    if run.returncode != 0 or not run.stdout:
+        raise RuntimeError(run.stderr.decode(errors="replace").strip()[:200] or "grim failed")
+    return run.stdout
+
+
+def ask_region():
+    """slurp a box, grim it in memory, send region.ask. Esc in slurp (or a second press while one runs) does
+    nothing."""
+    import base64
+    import subprocess
+
+    if subprocess.run(["pgrep", "-x", "slurp"], capture_output=True).returncode == 0:
+        return 0
+    pick = subprocess.run(["slurp"], capture_output=True, text=True)
+    geometry = pick.stdout.strip()
+    if pick.returncode != 0 or not geometry:
+        return 0  # Esc / cancelled: nothing happens
+    try:
+        image, fmt = _grab(geometry, "-t", "png"), "png"
+        if len(image) > REGION_MAX_BYTES:
+            image, fmt = _grab(geometry, "-t", "jpeg", "-q", "88"), "jpeg"
+        if len(image) > REGION_MAX_BYTES:
+            image = _grab(geometry, "-t", "jpeg", "-q", "85", "-s", "0.5")
+    except (RuntimeError, OSError, subprocess.TimeoutExpired) as exc:
+        print(f"jarvisctl: grim failed: {exc}", file=sys.stderr)
+        return 1
+    if len(image) > REGION_MAX_BYTES:
+        print("jarvisctl: that box is too big; draw a smaller one", file=sys.stderr)
+        return 1
+    cmd = {"cmd": "region.ask", "image": base64.b64encode(image).decode("ascii"), "format": fmt,
+           "geometry": geometry}
+    del image
+    return send(cmd, timeout=6.0)
+
+
+def send(action, timeout=TIMEOUT_S):
+    """One command, wait for its ack (exit code as in main)."""
+    sock = connect(socket_path())
+    sock.settimeout(timeout)
+    deadline = time.monotonic() + timeout
+    sock.sendall((json.dumps(action) + "\n").encode())
+    try:
+        for line in lines(sock):
+            try:
+                msg = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            if msg.get("ev") == "ack" and msg.get("cmd") == action.get("cmd"):
+                if not msg.get("ok"):
+                    print(f"jarvisctl: {msg.get('error', 'error')}", file=sys.stderr)
+                    return 1
+                result = msg.get("result") or {}
+                if isinstance(result, dict) and result.get("refused"):
+                    print(f"jarvisctl: not reading that box: {result.get('why')}", file=sys.stderr)
+                return 0
+            sock.settimeout(max(0.01, deadline - time.monotonic()))
+    except (socket.timeout, TimeoutError):
+        pass
+    except OSError as exc:
+        print(f"jarvisctl: connection to jarvisd failed: {exc}", file=sys.stderr)
+        return 1
+    print(f"jarvisctl: no reply from jarvisd within {timeout:g} s", file=sys.stderr)
+    return 1
+
+
 def main(args):
+    if args == ["ask-region"]:
+        return ask_region()
     if args and args[0] == "setup":
         return run_in_venv("jarvis.integrations.setup", args[1:])
     if args and args[0] == "showcase" and "--dry-run" in args[1:]:

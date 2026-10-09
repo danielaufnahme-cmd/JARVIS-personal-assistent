@@ -37,6 +37,14 @@ Window {
         property bool inControl: w.mode === "control"
         property string controlGoal: w.mode === "control" ? "Find the cheapest flight to Lisbon in Zen" : ""
         property var job: null
+        // section 28
+        property var attachments: []
+        property var meeting: null
+        property var focusState: null
+        property var searchResults: null
+        property int notifyCount: 0
+        property string notifyTop: ""
+        signal memorySaved(string kind, string text)
         function send(o) {
             console.log("SEND " + JSON.stringify(o));
             return true;
@@ -89,7 +97,24 @@ Window {
             feed({ ev: "reply", delta: ex[i][1] });
         }
         ipc.sessionActive = mode !== "idle" && mode !== "offline";
-        ipc.mode = mode === "offline" ? "idle" : mode === "control" ? "thinking" : mode === "sequence" ? "listening" : mode;
+        ipc.mode = mode === "offline" ? "idle" : mode === "control" ? "thinking" : mode === "sequence" || mode === "s28" ? "listening" : mode;
+        if (mode === "s28") {   // section 28: meeting notes + focus in Today, a dropped file, a search's results in ⑦
+            const now = Date.now();
+            ipc.meeting = { active: true, startedAt: now - 754000, title: "Weekly sync with Anna" };
+            ipc.focusState = { active: true, paused: false, label: "Geonix invoices", startedAt: now - 18 * 60000,
+                               endsAt: now + 27 * 60000, pausedLeftMs: 0 };
+            ipc.attachments = [{ kind: "file", name: "Q3 report.pdf", thumb: "" }, { kind: "image", name: "receipt.jpg", thumb: "" }];
+            ipc.searchResults = { query: "invoice Hetzner", at: now, items: [
+                { path: "/h/Documents/Invoices/hetzner-R0021184.pdf", name: "hetzner-R0021184.pdf", folder: "Documents/Invoices",
+                  modified: now - 3 * 86400000, snippet: "Invoice R0021184 · Amount due EUR 6.49 · charged to your card" },
+                { path: "/h/Documents/taxes-2026.ods", name: "taxes-2026.ods", folder: "Documents",
+                  modified: now - 5 * 3600000, snippet: "Hetzner Online GmbH — server — 77.88" },
+                { path: "/h/Projects/geonix/notes.md", name: "notes.md", folder: "Projects/geonix",
+                  modified: now - 40 * 60000, snippet: "move staging off the Hetzner box before the invoice renews" },
+                { path: "/h/Downloads/hetzner-contract.docx", name: "hetzner-contract.docx", folder: "Downloads",
+                  modified: now - 200 * 86400000, snippet: "" }
+            ] };
+        }
         if (mode === "listening")
             ipc.level = 0.62;
         if (mode === "speaking") {
